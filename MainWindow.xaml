@@ -829,12 +829,20 @@
                                     <md:MarkdownScrollViewer 
                                         Markdown="{Binding Content}"
                                         FontSize="16"
+                                        FontFamily="Microsoft YaHei UI"
                                         Foreground="#1A365D"
                                         VerticalScrollBarVisibility="Disabled"
                                         HorizontalAlignment="Stretch">
                                         <md:MarkdownScrollViewer.Resources>
                                             <Style TargetType="Paragraph">
                                                 <Setter Property="Margin" Value="0"/>
+                                                <Setter Property="FontFamily" Value="Microsoft YaHei UI"/>
+                                            </Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="FontFamily" Value="Microsoft YaHei UI"/>
+                                            </Style>
+                                            <Style TargetType="Run">
+                                                <Setter Property="FontFamily" Value="Microsoft YaHei UI"/>
                                             </Style>
                                         </md:MarkdownScrollViewer.Resources>
                                     </md:MarkdownScrollViewer>
@@ -935,7 +943,8 @@
                                             <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
                                         <Slider Grid.Column="0" x:Name="TemperatureSlider" Minimum="0" Maximum="2" Value="0.7"
-                                                Height="24" VerticalAlignment="Center" />
+                                                Height="24" VerticalAlignment="Center"
+                                                ValueChanged="ParameterSlider_ValueChanged" />
                                         <Border Grid.Column="1" Background="#FFFFFF" CornerRadius="6" Padding="8,4" 
                                                 MinWidth="45" Margin="10,0,0,0" BorderBrush="#CBD5E1" BorderThickness="1">
                                             <TextBlock x:Name="TemperatureValueText" Text="0.7" 
@@ -981,7 +990,8 @@
                                             <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
                                         <Slider Grid.Column="0" x:Name="TopPSlider" Minimum="0" Maximum="1" Value="0.9"
-                                                Height="24" VerticalAlignment="Center" />
+                                                Height="24" VerticalAlignment="Center"
+                                                ValueChanged="ParameterSlider_ValueChanged" />
                                         <Border Grid.Column="1" Background="#FFFFFF" CornerRadius="6" Padding="8,4" 
                                                 MinWidth="45" Margin="10,0,0,0" BorderBrush="#CBD5E1" BorderThickness="1">
                                             <TextBlock x:Name="TopPValueText" Text="0.9" 
@@ -1009,7 +1019,8 @@
                                             <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
                                         <Slider Grid.Column="0" x:Name="TopKSlider" Minimum="1" Maximum="100" Value="40"
-                                                Height="24" VerticalAlignment="Center" />
+                                                Height="24" VerticalAlignment="Center"
+                                                ValueChanged="ParameterSlider_ValueChanged" />
                                         <Border Grid.Column="1" Background="#FFFFFF" CornerRadius="6" Padding="8,4" 
                                                 MinWidth="45" Margin="10,0,0,0" BorderBrush="#CBD5E1" BorderThickness="1">
                                             <TextBlock x:Name="TopKValueText" Text="40" 

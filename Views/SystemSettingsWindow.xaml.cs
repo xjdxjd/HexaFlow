@@ -389,6 +389,125 @@ namespace HexaFlow.Views
         private void AutoSaveSettings(object sender, RoutedEventArgs e)
         {
             SaveSettings();
+
+            // 如果是字体设置改变，更新应用程序字体
+            if (sender is ComboBox comboBox)
+            {
+                if (comboBox.Name == "FontFamilyComboBox" || comboBox.Name == "FontSizeComboBox")
+                {
+                    UpdateApplicationFont();
+                }
+            }
+        }
+
+        // 更新应用程序字体
+        private void UpdateApplicationFont()
+        {
+            try
+            {
+                // 获取当前选择的字体和大小
+                string fontFamily = ((ComboBoxItem)FontFamilyComboBox.SelectedItem)?.Content.ToString() ?? "Microsoft YaHei UI";
+                int fontSize = Convert.ToInt32(((ComboBoxItem)FontSizeComboBox.SelectedItem)?.Content ?? "16");
+
+                // 更新配置服务中的字体设置
+                if (App.ConfigService?.Config != null)
+                {
+                    App.ConfigService.Config.FontFamily = fontFamily;
+                    App.ConfigService.Config.FontSize = fontSize;
+                    App.ConfigService.SaveConfigAsync();
+                }
+
+                // 更新主窗口字体
+                if (Application.Current.MainWindow is MainWindow mainWindow)
+                {
+                    // 更新主窗口样式
+                    var style = new Style(typeof(Window));
+                    style.Setters.Add(new Setter(Window.FontFamilyProperty, new FontFamily(fontFamily)));
+                    style.Setters.Add(new Setter(Window.FontSizeProperty, (double)fontSize));
+                    mainWindow.Style = style;
+
+                    // 更新主窗口中的特定控件字体
+                    UpdateControlFonts(mainWindow, fontFamily, fontSize);
+                }
+
+                // 更新系统设置窗口自身字体
+                var selfStyle = new Style(typeof(Window));
+                selfStyle.Setters.Add(new Setter(Window.FontFamilyProperty, new FontFamily(fontFamily)));
+                selfStyle.Setters.Add(new Setter(Window.FontSizeProperty, (double)fontSize));
+                this.Style = selfStyle;
+
+                // 更新系统设置窗口中的特定控件字体
+                UpdateControlFonts(this, fontFamily, fontSize);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"更新字体设置时出错: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        // 递归更新控件字体
+        private void UpdateControlFonts(DependencyObject parent, string fontFamily, int fontSize)
+        {
+            if (parent == null) return;
+
+            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+            {
+                var child = VisualTreeHelper.GetChild(parent, i);
+
+                if (child is FrameworkElement element)
+                {
+                    // 更新TextBlock字体
+                    if (element is TextBlock textBlock)
+                    {
+                        textBlock.FontFamily = new FontFamily(fontFamily);
+
+                        // 只更新默认大小的字体，避免破坏特意设置的字体大小
+                        if (Math.Abs(textBlock.FontSize - 14) < 0.1 || Math.Abs(textBlock.FontSize - 16) < 0.1)
+                        {
+                            textBlock.FontSize = fontSize;
+                        }
+                    }
+                    // 更新TextBox字体
+                    else if (element is TextBox textBox)
+                    {
+                        textBox.FontFamily = new FontFamily(fontFamily);
+                        if (Math.Abs(textBox.FontSize - 14) < 0.1 || Math.Abs(textBox.FontSize - 16) < 0.1)
+                        {
+                            textBox.FontSize = fontSize;
+                        }
+                    }
+                    // 更新ComboBox字体
+                    else if (element is ComboBox comboBox)
+                    {
+                        comboBox.FontFamily = new FontFamily(fontFamily);
+                        if (Math.Abs(comboBox.FontSize - 14) < 0.1 || Math.Abs(comboBox.FontSize - 16) < 0.1)
+                        {
+                            comboBox.FontSize = fontSize;
+                        }
+                    }
+                    // 更新Button字体
+                    else if (element is Button button)
+                    {
+                        button.FontFamily = new FontFamily(fontFamily);
+                        if (Math.Abs(button.FontSize - 14) < 0.1 || Math.Abs(button.FontSize - 16) < 0.1)
+                        {
+                            button.FontSize = fontSize;
+                        }
+                    }
+                    // 更新Label字体
+                    else if (element is Label label)
+                    {
+                        label.FontFamily = new FontFamily(fontFamily);
+                        if (Math.Abs(label.FontSize - 14) < 0.1 || Math.Abs(label.FontSize - 16) < 0.1)
+                        {
+                            label.FontSize = fontSize;
+                        }
+                    }
+                }
+
+                // 递归处理子元素
+                UpdateControlFonts(child, fontFamily, fontSize);
+            }
         }
 
         private void SaveSettingsButton_Click(object sender, RoutedEventArgs e)

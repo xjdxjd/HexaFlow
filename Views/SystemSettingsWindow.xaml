@@ -234,7 +234,7 @@
                     <!-- 第一部分：主题与语言 -->
                     <Border Grid.Row="0" Background="#F9FAFB" CornerRadius="8" Margin="0,10,0,10" Padding="20">
                         <StackPanel>
-                            <TextBlock Text="主题与语言" FontSize="16" FontWeight="Medium" Foreground="#1A365D" Margin="0,0,0,15" />
+                            <TextBlock Text="主题与语言" FontSize="16" FontWeight="Medium" Foreground="#8B5CF6" Margin="0,0,0,15" />
                             
                             <!-- 主题设置 -->
                             <Grid Margin="0,0,0,15">
@@ -322,7 +322,7 @@
                     <!-- 第二部分：文件保存位置 -->
                     <Border Grid.Row="1" Background="#F9FAFB" CornerRadius="8" Margin="0,10,0,10" Padding="20">
                         <StackPanel>
-                            <TextBlock Text="文件保存位置" FontSize="16" FontWeight="Medium" Foreground="#1A365D" Margin="0,0,0,15" />
+                            <TextBlock Text="文件保存位置" FontSize="16" FontWeight="Medium" Foreground="#8B5CF6" Margin="0,0,0,15" />
                             
                             <!-- 模型保存位置 -->
                             <Grid>
@@ -423,7 +423,7 @@
                     <!-- 第三部分：其他设置 -->
                     <Border Grid.Row="2" Background="#F9FAFB" CornerRadius="8" Margin="0,10,0,10" Padding="20">
                         <StackPanel>
-                            <TextBlock Text="其他设置" FontSize="16" FontWeight="Medium" Foreground="#1A365D" Margin="0,0,0,15" />
+                            <TextBlock Text="其他设置" FontSize="16" FontWeight="Medium" Foreground="#8B5CF6" Margin="0,0,0,15" />
                             
                             <!-- 其他设置项 -->
                             <Grid>

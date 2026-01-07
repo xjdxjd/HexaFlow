@@ -16,7 +16,7 @@ namespace HexaFlow
 {
     public partial class MainWindow : Window
     {
-        private readonly OllamaApiClient _ollama;
+        private OllamaApiClient _ollama;
         private readonly ChatHistoryService _chatHistoryService;
         private readonly ObservableCollection<ChatMessage> _chatMessages = new();
         private readonly ObservableCollection<ChatSession> _chatSessions = new();
@@ -31,6 +31,7 @@ namespace HexaFlow
             // 初始化历史服务
             _chatHistoryService = new ChatHistoryService();
 
+            // 暂时使用默认API地址，将在Loaded事件中从配置加载
             _ollama = new OllamaApiClient("http://localhost:11434");
 
             Loaded += MainWindow_Loaded;
@@ -38,8 +39,261 @@ namespace HexaFlow
 
         private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
+            // 从配置中更新API地址
+            if (App.ConfigService?.Config != null)
+            {
+                _ollama = new OllamaApiClient(App.ConfigService.Config.OllamaApiUrl);
+
+                // 加载配置中的字体设置
+                ApplyFontSettings(App.ConfigService.Config.FontFamily, App.ConfigService.Config.FontSize);
+            }
+
             await LoadModelsAsync();
             await LoadChatHistoryAsync();
+
+            // 加载配置中的模型参数
+            LoadModelParametersFromConfig();
+        }
+
+        // 应用字体设置
+        private void ApplyFontSettings(string fontFamily, int fontSize)
+        {
+            try
+            {
+                // 更新主窗口样式
+                var style = new Style(typeof(Window));
+                style.Setters.Add(new Setter(Window.FontFamilyProperty, new FontFamily(fontFamily)));
+                style.Setters.Add(new Setter(Window.FontSizeProperty, (double)fontSize));
+                this.Style = style;
+
+                // 更新主窗口中的特定控件字体
+                UpdateControlFonts(this, fontFamily, fontSize);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"应用字体设置时出错: {ex.Message}");
+            }
+        }
+
+        // 递归更新控件字体
+        private void UpdateControlFonts(DependencyObject parent, string fontFamily, int fontSize)
+        {
+            if (parent == null) return;
+
+            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+            {
+                var child = VisualTreeHelper.GetChild(parent, i);
+
+                if (child is FrameworkElement element)
+                {
+                    // 更新TextBlock字体
+                    if (element is TextBlock textBlock)
+                    {
+                        textBlock.FontFamily = new FontFamily(fontFamily);
+
+                        // 只更新默认大小的字体，避免破坏特意设置的字体大小
+                        if (Math.Abs(textBlock.FontSize - 14) < 0.1 || Math.Abs(textBlock.FontSize - 16) < 0.1)
+                        {
+                            textBlock.FontSize = fontSize;
+                        }
+                    }
+                    // 更新TextBox字体
+                    else if (element is TextBox textBox)
+                    {
+                        textBox.FontFamily = new FontFamily(fontFamily);
+                        if (Math.Abs(textBox.FontSize - 14) < 0.1 || Math.Abs(textBox.FontSize - 16) < 0.1)
+                        {
+                            textBox.FontSize = fontSize;
+                        }
+                    }
+                    // 更新ComboBox字体
+                    else if (element is ComboBox comboBox)
+                    {
+                        comboBox.FontFamily = new FontFamily(fontFamily);
+                        if (Math.Abs(comboBox.FontSize - 14) < 0.1 || Math.Abs(comboBox.FontSize - 16) < 0.1)
+                        {
+                            comboBox.FontSize = fontSize;
+                        }
+                    }
+                    // 更新Button字体
+                    else if (element is Button button)
+                    {
+                        button.FontFamily = new FontFamily(fontFamily);
+                        if (Math.Abs(button.FontSize - 14) < 0.1 || Math.Abs(button.FontSize - 16) < 0.1)
+                        {
+                            button.FontSize = fontSize;
+                        }
+                    }
+                    // 更新Label字体
+                    else if (element is Label label)
+                    {
+                        label.FontFamily = new FontFamily(fontFamily);
+                        if (Math.Abs(label.FontSize - 14) < 0.1 || Math.Abs(label.FontSize - 16) < 0.1)
+                        {
+                            label.FontSize = fontSize;
+                        }
+                    }
+                }
+
+                // 递归处理子元素
+                UpdateControlFonts(child, fontFamily, fontSize);
+            }
+        }
+
+        private void LoadModelParametersFromConfig()
+        {
+            // 检查ConfigService是否已初始化
+            if (App.ConfigService?.ModelsConfig == null)
+                return;
+
+            // 加载默认模型参数
+            var modelsConfig = App.ConfigService.ModelsConfig;
+
+            try
+            {
+                TemperatureSlider.Value = modelsConfig.DefaultTemperature;
+                TemperatureValueText.Text = modelsConfig.DefaultTemperature.ToString("F1");
+
+                TopPSlider.Value = modelsConfig.DefaultTopP;
+                TopPValueText.Text = modelsConfig.DefaultTopP.ToString("F2");
+
+                TopKSlider.Value = modelsConfig.DefaultTopK;
+                TopKValueText.Text = modelsConfig.DefaultTopK.ToString();
+
+                // 如果有当前选中的模型，加载模型特定参数
+                if (ModelComboBox.SelectedItem is Model selectedModel)
+                {
+                    LoadModelSpecificParameters(selectedModel.Name);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"加载默认模型参数失败: {ex.Message}");
+            }
+        }
+
+        private void LoadModelSpecificParameters(string modelName)
+        {
+            // 检查ConfigService是否已初始化
+            if (App.ConfigService?.ModelsConfig == null)
+                return;
+
+            var modelsConfig = App.ConfigService.ModelsConfig;
+
+            try
+            {
+                if (modelsConfig.ModelSpecificParameters.TryGetValue(modelName, out var modelParams))
+                {
+                    if (modelParams.Temperature.HasValue)
+                    {
+                        TemperatureSlider.Value = modelParams.Temperature.Value;
+                        TemperatureValueText.Text = modelParams.Temperature.Value.ToString("F1");
+                    }
+
+                    if (modelParams.TopP.HasValue)
+                    {
+                        TopPSlider.Value = modelParams.TopP.Value;
+                        TopPValueText.Text = modelParams.TopP.Value.ToString("F2");
+                    }
+
+                    if (modelParams.TopK.HasValue)
+                    {
+                        TopKSlider.Value = modelParams.TopK.Value;
+                        TopKValueText.Text = modelParams.TopK.Value.ToString();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"加载模型特定参数失败: {ex.Message}");
+            }
+        }
+
+        private async void ParameterSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            // 检查ConfigService是否已初始化
+            if (App.ConfigService == null || App.ConfigService.ModelsConfig == null)
+                return;
+
+            // 更新显示值
+            if (sender == TemperatureSlider)
+            {
+                TemperatureValueText.Text = e.NewValue.ToString("F1");
+            }
+            else if (sender == TopPSlider)
+            {
+                TopPValueText.Text = e.NewValue.ToString("F2");
+            }
+            else if (sender == TopKSlider)
+            {
+                TopKValueText.Text = e.NewValue.ToString();
+            }
+
+            // 获取当前选中的模型
+            if (ModelComboBox.SelectedItem is Model selectedModel)
+            {
+                var modelsConfig = App.ConfigService.ModelsConfig;
+
+                // 确保模型参数存在
+                if (!modelsConfig.ModelSpecificParameters.ContainsKey(selectedModel.Name))
+                {
+                    modelsConfig.ModelSpecificParameters[selectedModel.Name] = new ModelParameters();
+                }
+
+                var modelParams = modelsConfig.ModelSpecificParameters[selectedModel.Name];
+
+                // 更新参数值
+                if (sender == TemperatureSlider)
+                {
+                    modelParams.Temperature = e.NewValue;
+                }
+                else if (sender == TopPSlider)
+                {
+                    modelParams.TopP = e.NewValue;
+                }
+                else if (sender == TopKSlider)
+                {
+                    modelParams.TopK = (int)e.NewValue;
+                }
+
+                // 保存配置
+                try
+                {
+                    await App.ConfigService.SaveModelsConfigAsync();
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"保存模型配置失败: {ex.Message}");
+                }
+            }
+            else
+            {
+                // 如果没有选中模型，更新默认参数
+                var modelsConfig = App.ConfigService.ModelsConfig;
+
+                if (sender == TemperatureSlider)
+                {
+                    modelsConfig.DefaultTemperature = e.NewValue;
+                }
+                else if (sender == TopPSlider)
+                {
+                    modelsConfig.DefaultTopP = e.NewValue;
+                }
+                else if (sender == TopKSlider)
+                {
+                    modelsConfig.DefaultTopK = (int)e.NewValue;
+                }
+
+                // 保存配置
+                try
+                {
+                    await App.ConfigService.SaveModelsConfigAsync();
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"保存默认模型配置失败: {ex.Message}");
+                }
+            }
         }
 
         private async Task LoadModelsAsync()
@@ -52,7 +306,24 @@ namespace HexaFlow
 
                 if (models.Any())
                 {
-                    ModelComboBox.SelectedIndex = 0;
+                    // 尝试选择配置中的默认模型
+                    string defaultModel = App.ConfigService.Config.DefaultModel;
+                    if (!string.IsNullOrEmpty(defaultModel))
+                    {
+                        var defaultModelObj = models.FirstOrDefault(m => m.Name == defaultModel);
+                        if (defaultModelObj != null)
+                        {
+                            ModelComboBox.SelectedItem = defaultModelObj;
+                        }
+                        else
+                        {
+                            ModelComboBox.SelectedIndex = 0;
+                        }
+                    }
+                    else
+                    {
+                        ModelComboBox.SelectedIndex = 0;
+                    }
                 }
             }
             catch (Exception ex)
@@ -172,12 +443,32 @@ namespace HexaFlow
             }
         }
 
-        private void ModelComboBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        private async void ModelComboBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
             if (ModelComboBox.SelectedItem is Model selectedModel)
             {
                 _ollama.SelectedModel = selectedModel.Name;
                 CurrentModelTextBlock.Text = $" - {selectedModel.Name}";
+
+                // 保存为默认模型
+                if (App.ConfigService?.Config != null)
+                {
+                    App.ConfigService.Config.DefaultModel = selectedModel.Name;
+                    try
+                    {
+                        await App.ConfigService.SaveConfigAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"保存默认模型失败: {ex.Message}");
+                    }
+                }
+
+                // 加载模型特定参数
+                if (App.ConfigService?.ModelsConfig != null)
+                {
+                    LoadModelSpecificParameters(selectedModel.Name);
+                }
 
                 // 切换模型时重新创建会话（新上下文）
                 _currentChat = new Chat(_ollama);
