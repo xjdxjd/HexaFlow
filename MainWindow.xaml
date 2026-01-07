@@ -944,10 +944,11 @@
                                         </Grid.ColumnDefinitions>
                                         <Slider Grid.Column="0" x:Name="TemperatureSlider" Minimum="0" Maximum="2" Value="0.7"
                                                 Height="24" VerticalAlignment="Center"
+                                                TickFrequency="0.1" IsSnapToTickEnabled="True"
                                                 ValueChanged="ParameterSlider_ValueChanged" />
                                         <Border Grid.Column="1" Background="#FFFFFF" CornerRadius="6" Padding="8,4" 
                                                 MinWidth="45" Margin="10,0,0,0" BorderBrush="#CBD5E1" BorderThickness="1">
-                                            <TextBlock x:Name="TemperatureValueText" Text="0.7" 
+                                            <TextBox x:Name="TemperatureValueText" Text="0.7" 
                                                        Foreground="#0F172A" FontSize="14" FontWeight="Medium" 
                                                        HorizontalAlignment="Center" />
                                         </Border>
@@ -991,10 +992,11 @@
                                         </Grid.ColumnDefinitions>
                                         <Slider Grid.Column="0" x:Name="TopPSlider" Minimum="0" Maximum="1" Value="0.9"
                                                 Height="24" VerticalAlignment="Center"
+                                                TickFrequency="0.01" IsSnapToTickEnabled="True"
                                                 ValueChanged="ParameterSlider_ValueChanged" />
                                         <Border Grid.Column="1" Background="#FFFFFF" CornerRadius="6" Padding="8,4" 
                                                 MinWidth="45" Margin="10,0,0,0" BorderBrush="#CBD5E1" BorderThickness="1">
-                                            <TextBlock x:Name="TopPValueText" Text="0.9" 
+                                            <TextBox x:Name="TopPValueText" Text="0.9" 
                                                        Foreground="#0F172A" FontSize="14" FontWeight="Medium" 
                                                        HorizontalAlignment="Center" />
                                         </Border>
@@ -1020,10 +1022,11 @@
                                         </Grid.ColumnDefinitions>
                                         <Slider Grid.Column="0" x:Name="TopKSlider" Minimum="1" Maximum="100" Value="40"
                                                 Height="24" VerticalAlignment="Center"
+                                                TickFrequency="1" IsSnapToTickEnabled="True"
                                                 ValueChanged="ParameterSlider_ValueChanged" />
                                         <Border Grid.Column="1" Background="#FFFFFF" CornerRadius="6" Padding="8,4" 
                                                 MinWidth="45" Margin="10,0,0,0" BorderBrush="#CBD5E1" BorderThickness="1">
-                                            <TextBlock x:Name="TopKValueText" Text="40" 
+                                            <TextBox x:Name="TopKValueText" Text="40" 
                                                        Foreground="#0F172A" FontSize="14" FontWeight="Medium" 
                                                        HorizontalAlignment="Center" />
                                         </Border>

@@ -33,6 +33,11 @@ namespace HexaFlow
 
             // 暂时使用默认API地址，将在Loaded事件中从配置加载
             _ollama = new OllamaApiClient("http://localhost:11434");
+            
+            // 添加文本框事件绑定
+            TemperatureValueText.TextChanged += ParameterTextBox_TextChanged;
+            TopPValueText.TextChanged += ParameterTextBox_TextChanged;
+            TopKValueText.TextChanged += ParameterTextBox_TextChanged;
 
             Loaded += MainWindow_Loaded;
         }
@@ -229,6 +234,75 @@ namespace HexaFlow
                 TopKValueText.Text = e.NewValue.ToString();
             }
 
+            // 保存参数
+            await SaveParameterFromSlider(sender, e.NewValue);
+        }
+
+        private async void ParameterTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            // 检查ConfigService是否已初始化
+            if (App.ConfigService == null || App.ConfigService.ModelsConfig == null)
+                return;
+
+            try
+            {
+                if (sender == TemperatureValueText)
+                {
+                    if (double.TryParse(TemperatureValueText.Text, out double tempValue))
+                    {
+                        // 确保值在有效范围内
+                        tempValue = Math.Max(0, Math.Min(2, tempValue));
+
+                        // 更新滑块值（但不触发ValueChange事件）
+                        TemperatureSlider.ValueChanged -= ParameterSlider_ValueChanged;
+                        TemperatureSlider.Value = tempValue;
+                        TemperatureSlider.ValueChanged += ParameterSlider_ValueChanged;
+
+                        // 保存参数
+                        await SaveParameterFromSlider(TemperatureSlider, tempValue);
+                    }
+                }
+                else if (sender == TopPValueText)
+                {
+                    if (double.TryParse(TopPValueText.Text, out double topPValue))
+                    {
+                        // 确保值在有效范围内
+                        topPValue = Math.Max(0, Math.Min(1, topPValue));
+
+                        // 更新滑块值（但不触发ValueChange事件）
+                        TopPSlider.ValueChanged -= ParameterSlider_ValueChanged;
+                        TopPSlider.Value = topPValue;
+                        TopPSlider.ValueChanged += ParameterSlider_ValueChanged;
+
+                        // 保存参数
+                        await SaveParameterFromSlider(TopPSlider, topPValue);
+                    }
+                }
+                else if (sender == TopKValueText)
+                {
+                    if (int.TryParse(TopKValueText.Text, out int topKValue))
+                    {
+                        // 确保值在有效范围内
+                        topKValue = Math.Max(1, Math.Min(100, topKValue));
+
+                        // 更新滑块值（但不触发ValueChange事件）
+                        TopKSlider.ValueChanged -= ParameterSlider_ValueChanged;
+                        TopKSlider.Value = topKValue;
+                        TopKSlider.ValueChanged += ParameterSlider_ValueChanged;
+
+                        // 保存参数
+                        await SaveParameterFromSlider(TopKSlider, topKValue);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"文本框值变化处理失败: {ex.Message}");
+            }
+        }
+
+        private async Task SaveParameterFromSlider(object sender, double value)
+        {
             // 获取当前选中的模型
             if (ModelComboBox.SelectedItem is Model selectedModel)
             {
@@ -245,15 +319,15 @@ namespace HexaFlow
                 // 更新参数值
                 if (sender == TemperatureSlider)
                 {
-                    modelParams.Temperature = e.NewValue;
+                    modelParams.Temperature = value;
                 }
                 else if (sender == TopPSlider)
                 {
-                    modelParams.TopP = e.NewValue;
+                    modelParams.TopP = value;
                 }
                 else if (sender == TopKSlider)
                 {
-                    modelParams.TopK = (int)e.NewValue;
+                    modelParams.TopK = (int)value;
                 }
 
                 // 保存配置
@@ -273,15 +347,15 @@ namespace HexaFlow
 
                 if (sender == TemperatureSlider)
                 {
-                    modelsConfig.DefaultTemperature = e.NewValue;
+                    modelsConfig.DefaultTemperature = value;
                 }
                 else if (sender == TopPSlider)
                 {
-                    modelsConfig.DefaultTopP = e.NewValue;
+                    modelsConfig.DefaultTopP = value;
                 }
                 else if (sender == TopKSlider)
                 {
-                    modelsConfig.DefaultTopK = (int)e.NewValue;
+                    modelsConfig.DefaultTopK = (int)value;
                 }
 
                 // 保存配置
@@ -295,6 +369,8 @@ namespace HexaFlow
                 }
             }
         }
+
+
 
         private async Task LoadModelsAsync()
         {
