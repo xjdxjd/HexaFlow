@@ -1,8 +1,4 @@
-﻿using System.Configuration;
-using System.Data;
-using System.Threading.Tasks;
-using System.Windows;
-using HexaFlow.Services;
+﻿using System.Windows;
 
 namespace HexaFlow;
 
