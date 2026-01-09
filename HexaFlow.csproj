@@ -21,11 +21,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Page Update="Views\MarkdownStyles.xaml">
-        <Generator>MSBuild:Compile</Generator>
-        <XamlRuntime>Wpf</XamlRuntime>
-        <SubType>Designer</SubType>
-      </Page>
+      <Folder Include="Services\" />
+      <Folder Include="Views\" />
     </ItemGroup>
 
 </Project>
