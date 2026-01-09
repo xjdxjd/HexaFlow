@@ -14,7 +14,7 @@ namespace AIChat.Views
         private long _previousBytes;
         private DateTime _previousTime;
 
-        public event PropertyChangedEventHandler PropertyChanged;
+        public event PropertyChangedEventHandler? PropertyChanged;
 
         public ModelDownloadProgressDialog(string modelName)
         {

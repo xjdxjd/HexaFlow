@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <OutputType>WinExe</OutputType>
@@ -18,6 +18,14 @@
     <ItemGroup>
       <None Remove="Resources\app.ico" />
       <Resource Include="Resources\app.ico" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Page Update="Views\MarkdownStyles.xaml">
+        <Generator>MSBuild:Compile</Generator>
+        <XamlRuntime>Wpf</XamlRuntime>
+        <SubType>Designer</SubType>
+      </Page>
     </ItemGroup>
 
 </Project>

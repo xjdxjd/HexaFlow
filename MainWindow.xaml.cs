@@ -8,7 +8,9 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using HexaFlow.Models;
 using HexaFlow.Services;
+using HexaFlow.Views;
 using OllamaSharp;
 using OllamaSharp.Models;
 
@@ -18,10 +20,13 @@ namespace HexaFlow
     {
         private OllamaApiClient _ollama;
         private readonly ChatHistoryService _chatHistoryService;
+        private readonly SystemPromptService _systemPromptService;
         private readonly ObservableCollection<ChatMessage> _chatMessages = new();
         private readonly ObservableCollection<ChatSession> _chatSessions = new();
+        private readonly ObservableCollection<SystemPrompt> _systemPrompts = new();
         private Chat? _currentChat; // 当前会话（维护上下文）
         private int _currentSessionId = -1; // 当前会话ID，-1表示新会话
+        private SystemPrompt? _currentSystemPrompt; // 当前使用的系统提示词
 
         public MainWindow()
         {
@@ -30,6 +35,9 @@ namespace HexaFlow
 
             // 初始化历史服务
             _chatHistoryService = new ChatHistoryService();
+
+            // 初始化系统提示词服务
+            _systemPromptService = new SystemPromptService();
 
             // 暂时使用默认API地址，将在Loaded事件中从配置加载
             _ollama = new OllamaApiClient("http://localhost:11434");
@@ -55,6 +63,7 @@ namespace HexaFlow
 
             await LoadModelsAsync();
             await LoadChatHistoryAsync();
+            await LoadSystemPromptsAsync();
 
             // 加载配置中的模型参数
             LoadModelParametersFromConfig();
@@ -784,31 +793,81 @@ namespace HexaFlow
             }
         }
 
-        private void SystemPromptItem_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+
+
+        private async Task LoadSystemPromptsAsync()
         {
-            if (sender is ListBoxItem item && item.Content is string promptName)
+            try
             {
-                // 根据选择的提示词名称设置系统提示
-                string systemPrompt = GetSystemPromptByName(promptName);
-                // 这里可以添加将系统提示应用到当前对话的逻辑
-                // 例如：_currentChat.SetSystemPrompt(systemPrompt);
+                var prompts = await _systemPromptService.GetSystemPromptsAsync();
+
+                _systemPrompts.Clear();
+                foreach (var prompt in prompts)
+                {
+                    _systemPrompts.Add(prompt);
+                }
+
+                // 设置当前系统提示词
+                _currentSystemPrompt = await _systemPromptService.GetActiveSystemPromptAsync();
+
+                // 更新UI
+                UpdateSystemPromptList();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"加载系统提示词失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
-        private string GetSystemPromptByName(string promptName)
+        private void UpdateSystemPromptList()
         {
-            switch (promptName)
+            // 清空现有列表项
+            SystemPromptListBox.Items.Clear();
+
+            // 添加系统提示词到列表
+            foreach (var prompt in _systemPrompts)
             {
-                case "默认助手":
-                    return "你是一个有用的AI助手，能够回答各种问题并提供有用的建议。";
-                case "编程助手":
-                    return "你是一个专业的编程助手，精通多种编程语言，能够帮助用户解决编程问题、优化代码和解释技术概念。";
-                case "创意写作助手":
-                    return "你是一个创意写作助手，能够帮助用户创作各种类型的文本内容，包括故事、诗歌、文章等。";
-                case "学术研究助手":
-                    return "你是一个学术研究助手，能够帮助用户查找学术资料、分析研究问题并提供专业的学术建议。";
-                default:
-                    return "你是一个有用的AI助手。";
+                var item = new ListBoxItem { Content = prompt.Name };
+
+                // 如果是当前使用的系统提示词，设置特殊颜色
+                if (_currentSystemPrompt != null && prompt.Id == _currentSystemPrompt.Id)
+                {
+                    item.Foreground = new SolidColorBrush(Color.FromRgb(99, 102, 241)); // #6366F1
+                    item.FontWeight = FontWeights.SemiBold;
+                }
+
+                SystemPromptListBox.Items.Add(item);
+            }
+        }
+
+        private async void AddSystemPromptButton_Click(object sender, RoutedEventArgs e)
+        {
+            var addPromptWindow = new AddSystemPromptWindow(_systemPromptService);
+            if (addPromptWindow.ShowDialog() == true)
+            {
+                // 重新加载系统提示词列表
+                await LoadSystemPromptsAsync();
+            }
+        }
+
+        private async void SystemPromptItem_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (sender is ListBoxItem item && item.Content is string promptName)
+            {
+                // 查找对应的系统提示词
+                var prompt = _systemPrompts.FirstOrDefault(p => p.Name == promptName);
+                if (prompt != null)
+                {
+                    // 设置为当前使用的系统提示词
+                    await _systemPromptService.SetActiveSystemPromptAsync(prompt.Id);
+                    _currentSystemPrompt = prompt;
+
+                    // 更新UI
+                    UpdateSystemPromptList();
+
+                    // 如果当前有聊天，可以在这里更新系统提示词
+                    // 例如：_currentChat.SetSystemPrompt(prompt.Content);
+                }
             }
         }
     }

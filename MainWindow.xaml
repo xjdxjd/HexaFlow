@@ -833,18 +833,7 @@
                                         Foreground="#1A365D"
                                         VerticalScrollBarVisibility="Disabled"
                                         HorizontalAlignment="Stretch">
-                                        <md:MarkdownScrollViewer.Resources>
-                                            <Style TargetType="Paragraph">
-                                                <Setter Property="Margin" Value="0"/>
-                                                <Setter Property="FontFamily" Value="Microsoft YaHei UI"/>
-                                            </Style>
-                                            <Style TargetType="TextBlock">
-                                                <Setter Property="FontFamily" Value="Microsoft YaHei UI"/>
-                                            </Style>
-                                            <Style TargetType="Run">
-                                                <Setter Property="FontFamily" Value="Microsoft YaHei UI"/>
-                                            </Style>
-                                        </md:MarkdownScrollViewer.Resources>
+
                                     </md:MarkdownScrollViewer>
                                 </Border>
                             </DataTemplate>
@@ -1036,20 +1025,59 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- 系统提示词标题 -->
-                    <TextBlock Grid.Row="1" Text="系统提示词"
-                               Foreground="#0F172A" FontSize="16" FontWeight="SemiBold"
-                               Margin="0,0,0,5" />
-                    <TextBlock Grid.Row="1" Text="(系统提示，用于控制AI的行为)"
-                               Foreground="#64748B" FontSize="12"
-                               Margin="0,26,0,10" />
+                    <!-- 系统提示词区域 -->
+                    <Border Grid.Row="1" Background="#FFFFFF" CornerRadius="12" Padding="20"
+                            BorderBrush="#E2E8F0" BorderThickness="1">
+                        <StackPanel>
+                            <!-- 标题 -->
+                            <Grid Margin="0,0,0,20">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="系统提示词" FontSize="16" FontWeight="Medium" Foreground="#1A365D"
+                                           VerticalAlignment="Center" />
+                                <Button Grid.Column="1" 
+                                x:Name="AddSystemPromptButton"
+                                Content="+" 
+                                Width="30" Height="30"
+                                Margin="10,0,0,0"
+                                Background="#6366F1"
+                                Foreground="White"
+                                FontSize="16"
+                                FontWeight="Bold"
+                                BorderThickness="0"
+                                Cursor="Hand"
+                                Click="AddSystemPromptButton_Click">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}"
+                                            CornerRadius="15"
+                                            Width="{TemplateBinding Width}"
+                                            Height="{TemplateBinding Height}">
+                                        <ContentPresenter HorizontalAlignment="Center"
+                                                        VerticalAlignment="Center"/>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background" Value="#4F46E5"/>
+                                        </Trigger>
+                                        <Trigger Property="IsPressed" Value="True">
+                                            <Setter Property="Background" Value="#4338CA"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                            </Grid>
 
-                    <!-- 系统提示词列表 -->
-                    <ListBox Grid.Row="1" x:Name="SystemPromptListBox"
-                             Background="#FFFFFF" BorderBrush="#CBD5E1"
+                            <!-- 系统提示词列表 -->
+                            <Border Background="#F8FAFC" CornerRadius="8" Padding="16">
+                                <ListBox x:Name="SystemPromptListBox"
+                             Background="Transparent" BorderBrush="Transparent"
                              Foreground="#0F172A" FontSize="14"
-                             Padding="5" MinHeight="100" Margin="0,50,0,0"
-                             BorderThickness="1"
+                             Padding="0" MinHeight="100" Margin="0,0,0,0"
+                             BorderThickness="0"
                              ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                              ScrollViewer.VerticalScrollBarVisibility="Auto">
                         <ListBox.ItemContainerStyle>
@@ -1084,14 +1112,13 @@
                                     </Setter.Value>
                                 </Setter>
                             </Style>
-                        </ListBox.ItemContainerStyle>
-                        <ListBoxItem Content="默认助手" />
-                        <ListBoxItem Content="编程助手" />
-                        <ListBoxItem Content="创意写作助手" />
-                        <ListBoxItem Content="学术研究助手" />
-                    </ListBox>
-                </Grid>
-            </Border>
+                                </ListBox.ItemContainerStyle>
+                            </ListBox>
+                        </Border>
+                    </StackPanel>
+                </Border>
+        </Grid>
+    </Border>
         </Grid>
     </Grid>
 </Window>

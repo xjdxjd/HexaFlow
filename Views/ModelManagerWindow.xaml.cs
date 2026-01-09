@@ -19,7 +19,7 @@ namespace HexaFlow.Views
         private string _selectedCategory = "all";
         private string _selectedSort = "popularity";
 
-        public event PropertyChangedEventHandler PropertyChanged;
+        public event PropertyChangedEventHandler? PropertyChanged;
 
         public string SearchText
         {
