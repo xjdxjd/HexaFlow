@@ -8,7 +8,7 @@
         WindowStartupLocation="CenterOwner"
         WindowStyle="None"
         AllowsTransparency="True"
-        Background="{StaticResource DialogBackgroundBrush}">
+        Background="White">
 
     <Grid>
         <Grid.RowDefinitions>
@@ -36,13 +36,7 @@
                        VerticalAlignment="Center"/>
         </StackPanel>
 
-        <!-- 提示文本 -->
-        <TextBlock Grid.Row="1" 
-                   x:Name="PromptTextBlock"
-                   Text="请输入新的消息内容：" 
-                   Margin="70,45,16,16"
-                   TextWrapping="Wrap"
-                   Foreground="{StaticResource SecondaryTextBrush}"/>
+
 
         <!-- 文本框 -->
         <TextBox Grid.Row="2" 

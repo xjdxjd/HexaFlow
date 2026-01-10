@@ -14,7 +14,6 @@ namespace HexaFlow.Views
             InitializeComponent();
             
             Title = title;
-            PromptTextBlock.Text = prompt;
             AnswerTextBox.Text = defaultValue;
             AnswerTextBox.Focus();
             AnswerTextBox.SelectAll();

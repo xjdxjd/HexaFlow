@@ -221,7 +221,7 @@
     
     <!-- 右键菜单样式 -->
     <Style x:Key="JadeContextMenuStyle" TargetType="ContextMenu">
-        <Setter Property="Background" Value="{StaticResource FloatingPanelBackgroundBrush}"/>
+        <Setter Property="Background" Value="White"/>
         <Setter Property="BorderBrush" Value="{StaticResource SecondaryTextBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Padding" Value="0"/>
