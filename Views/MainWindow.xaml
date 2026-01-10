@@ -29,6 +29,7 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
                 <!-- 应用图标 -->
@@ -42,23 +43,33 @@
                 <TextBlock Grid.Column="1" 
                            Text="HexaFlow" 
                            FontSize="{StaticResource LargeTitleFontSize}"
-                           FontWeight="Medium"
+                           FontWeight="Bold"
                            Foreground="{StaticResource PrimaryTextBrush}"
                            VerticalAlignment="Center"/>
 
+                <!-- Ollama连接状态 -->
+                <TextBlock x:Name="ConnectionStatusTextBlock" Grid.Column="2" 
+                           Text="● 未连接" 
+                           FontSize="{StaticResource LargeTitleFontSize}"
+                           FontWeight="Bold"
+                           Foreground="{StaticResource ErrorBrush}"
+                           VerticalAlignment="Center"
+                           Margin="16,0,16,0"/>
+
                 <!-- 当前模型显示 -->
-                <Button Grid.Column="2" 
+                <Button x:Name="CurrentModelButton" Grid.Column="3" 
                         Content="当前模型: [模型名称]" 
                         Background="Transparent"
                         BorderThickness="0"
-                        Foreground="{StaticResource SecondaryTextBrush}"
+                        FontWeight="Bold"
+                        Foreground="{StaticResource ErrorBrush}"
                         FontSize="16"
                         Padding="12,6"
                         Margin="0,0,16,0"
                         VerticalAlignment="Center"/>
 
                 <!-- 窗口控制按钮 -->
-                <StackPanel Grid.Column="3" 
+                <StackPanel Grid.Column="4" 
                             Orientation="Horizontal"
                             VerticalAlignment="Center">
                     <Button Name="MinimizeButton"
@@ -120,9 +131,10 @@
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
 
-                                <ComboBox Grid.Column="0" 
+                                <ComboBox x:Name="ModelComboBox" Grid.Column="0" 
                                           Height="36"
-                                          Style="{StaticResource JadeComboBoxStyle}"/>
+                                          Style="{StaticResource JadeComboBoxStyle}"
+                                          MouseDoubleClick="ModelComboBox_MouseDoubleClick"/>
 
                                 <Button Grid.Column="1" 
                                         Style="{StaticResource JadeButtonStyle}"
@@ -155,7 +167,7 @@
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
 
-                                <Button Grid.Column="0" 
+                                <Button x:Name="NewConversationButton" Grid.Column="0" 
                                         Style="{StaticResource JadeButtonStyle}"
                                         Content="新建会话"/>
 
@@ -179,31 +191,30 @@
                             </Grid>
 
                             <!-- 会话列表 -->
-                            <ListBox Grid.Row="1" Style="{StaticResource JadeListBoxStyle}">
-                                <ListBoxItem>
-                                    <StackPanel>
-                                        <TextBlock Text="会话标题1" FontWeight="Medium"/>
-                                        <TextBlock Text="会话预览内容..." 
-                                                   FontSize="12"
-                                                   Foreground="{StaticResource SecondaryTextBrush}"
-                                                   TextTrimming="CharacterEllipsis"/>
-                                        <TextBlock Text="2023-06-15 14:30" 
-                                                   FontSize="11"
-                                                   Foreground="{StaticResource SecondaryTextBrush}"/>
-                                    </StackPanel>
-                                </ListBoxItem>
-                                <ListBoxItem>
-                                    <StackPanel>
-                                        <TextBlock Text="会话标题2" FontWeight="Medium"/>
-                                        <TextBlock Text="会话预览内容..." 
-                                                   FontSize="12"
-                                                   Foreground="{StaticResource SecondaryTextBrush}"
-                                                   TextTrimming="CharacterEllipsis"/>
-                                        <TextBlock Text="2023-06-15 10:20" 
-                                                   FontSize="11"
-                                                   Foreground="{StaticResource SecondaryTextBrush}"/>
-                                    </StackPanel>
-                                </ListBoxItem>
+                            <ListBox x:Name="HistoryListBox" Grid.Row="1" Style="{StaticResource JadeListBoxStyle}">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="{StaticResource FloatingPanelBackgroundBrush}"
+                                                CornerRadius="{StaticResource DefaultCornerRadius}"
+                                                Padding="{StaticResource DefaultThickness}"
+                                                Margin="{StaticResource SmallMargin}">
+                                            <Grid>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                </Grid.RowDefinitions>
+                                                <TextBlock Grid.Row="0" 
+                                                           Text="{Binding Title}" 
+                                                           FontWeight="Medium"
+                                                           Foreground="{StaticResource PrimaryTextBrush}"/>
+                                                <TextBlock Grid.Row="1" 
+                                                           Text="{Binding UpdatedAt, StringFormat='{}{0:yyyy-MM-dd HH:mm}'}" 
+                                                           FontSize="11"
+                                                           Foreground="{StaticResource SecondaryTextBrush}"/>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
                             </ListBox>
                         </Grid>
                     </Border>
@@ -219,7 +230,8 @@
                                     Margin="0,0,12,0"
                                     Width="120"
                                     Content="系统设置"/>
-                            <Button Style="{StaticResource JadeButtonStyle}"
+                            <Button x:Name="ModelManagerButton"
+                                    Style="{StaticResource JadeButtonStyle}"
                                     Width="120"
                                     Content="模型管理"/>
                         </StackPanel>
@@ -239,31 +251,11 @@
                     </Grid.RowDefinitions>
 
                     <!-- 聊天记录区 -->
-                    <ScrollViewer Grid.Row="0" 
+                    <ScrollViewer x:Name="ChatScrollViewer" Grid.Row="0" 
                                 VerticalScrollBarVisibility="Auto"
                                 HorizontalScrollBarVisibility="Disabled"
                                 Margin="0,0,0,20">
-                        <StackPanel>
-                            <!-- 用户消息 -->
-                            <Border Style="{StaticResource UserMessageBubbleStyle}">
-                                <TextBlock Text="用户消息内容" TextWrapping="Wrap"/>
-                            </Border>
-
-                            <!-- 助手消息 -->
-                            <Border Style="{StaticResource AssistantMessageBubbleStyle}">
-                                <TextBlock Text="助手回复内容" TextWrapping="Wrap"/>
-                            </Border>
-
-                            <!-- 更多消息示例 -->
-                            <Border Style="{StaticResource UserMessageBubbleStyle}">
-                                <TextBlock Text="这是另一个用户消息" TextWrapping="Wrap"/>
-                            </Border>
-
-                            <Border Style="{StaticResource AssistantMessageBubbleStyle}">
-                                <TextBlock Text="这是另一个助手回复，支持Markdown格式渲染，可以包含代码块、列表等丰富格式内容。这里展示的是长文本消息的显示效果，气泡会自动适应内容大小。"
-                                           TextWrapping="Wrap"/>
-                            </Border>
-                        </StackPanel>
+                        <StackPanel x:Name="MessagesPanel"/>
                     </ScrollViewer>
 
                     <!-- 输入浮岛 -->
@@ -280,20 +272,22 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
 
-                            <TextBox Grid.Column="0"
+                            <TextBox x:Name="InputTextBox" Grid.Column="0"
                                      Style="{StaticResource JadeTextBoxStyle}"
                                      Text="输入消息..."
                                      TextWrapping="Wrap"
                                      AcceptsReturn="True"
                                      VerticalScrollBarVisibility="Auto"
-                                     MaxHeight="150"/>
+                                     MaxHeight="150"
+                                     KeyDown="InputTextBox_KeyDown"/>
 
-                            <Button Grid.Column="1"
+                            <Button x:Name="SendButton" Grid.Column="1"
                                     Style="{StaticResource JadeButtonStyle}"
                                     Content="发送"
                                     Width="80"
                                     Height="36"
-                                    Margin="12,0,0,0"/>
+                                    Margin="12,0,0,0"
+                                    Click="SendButton_Click"/>
                         </Grid>
                     </Border>
                 </Grid>

@@ -31,7 +31,8 @@
     <SolidColorBrush x:Key="PrimaryButtonPressedBrush" Color="#4B7A8B"/>
 
     <!-- 文本颜色 -->
-    <SolidColorBrush x:Key="PrimaryTextBrush" Color="#1F2A44"/>
+    <!-- <SolidColorBrush x:Key="PrimaryTextBrush" Color="#1F2A44"/> -->
+    <SolidColorBrush x:Key="PrimaryTextBrush" Color="#0C2664"/>
     <SolidColorBrush x:Key="SecondaryTextBrush" Color="#6B8299"/>
     <SolidColorBrush x:Key="AccentTextBrush" Color="#FFFFFF"/>
     <SolidColorBrush x:Key="AccentTextTransparentBrush" Color="#FFFFFF" Opacity="0.9"/>

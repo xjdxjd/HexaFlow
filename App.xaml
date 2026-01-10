@@ -6,12 +6,15 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
+                <!-- 基础资源 -->
                 <ResourceDictionary Source="Views/common/Common.xaml"/>
-                <ResourceDictionary Source="Views/common/BrushesFixed.xaml"/>
-                <ResourceDictionary Source="Views/common/Animations.xaml"/>
+                <ResourceDictionary Source="Views/common/Brushes.xaml"/>
+                <!-- 样式资源 -->
                 <ResourceDictionary Source="Views/common/ControlStyles.xaml"/>
                 <ResourceDictionary Source="Views/common/FloatingPanelStyles.xaml"/>
                 <ResourceDictionary Source="Views/common/DialogStyles.xaml"/>
+                <!-- 动画资源 -->
+                <ResourceDictionary Source="Views/common/Animations.xaml"/>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>

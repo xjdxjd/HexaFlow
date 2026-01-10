@@ -9,9 +9,8 @@
         Height="600" 
         Width="700"
         Style="{StaticResource BaseDialogWindowStyle}"
-        WindowStartupLocation="CenterOwner">
-
-    <Border Background="{StaticResource DialogBackgroundBrush}"
+>
+    <Border
             CornerRadius="{StaticResource DefaultCornerRadius}"
             BorderThickness="1"
             BorderBrush="{StaticResource SecondaryTextBrush}">
@@ -78,7 +77,8 @@
                                             Content="删除"
                                             Width="80"
                                             Height="32"
-                                            Margin="12,0,0,0"/>
+                                            Margin="12,0,0,0"
+                                            Click="DeleteModel_Click"/>
                                 </Grid>
                             </Border>
                         </DataTemplate>
@@ -93,7 +93,8 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Grid.Column="0"
+                <TextBlock x:Name="StatusTextBlock"
+                           Grid.Column="0"
                            Text="已加载 0 个模型"
                            Foreground="{StaticResource SecondaryTextBrush}"
                            VerticalAlignment="Center"/>
