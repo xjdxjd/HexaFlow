@@ -12,7 +12,10 @@ using System.Windows.Media;
 using System.Linq;
 using System.Windows.Data;
 using Microsoft.Win32;
+using System.Runtime.InteropServices;
 using Newtonsoft.Json;
+using System.Windows.Media.Animation;
+using System.Windows.Media;
 
 namespace HexaFlow.Views
 {
@@ -24,6 +27,14 @@ namespace HexaFlow.Views
         private List<Message> _messages;
         private bool _isGeneratingResponse = false;
         private Conversation _currentConversation;
+        
+        // 用于窗口最大化功能的变量
+        private double _originalWidth;
+        private double _originalHeight;
+        private double _originalLeft;
+        private double _originalTop;
+        private WindowState _originalWindowState;
+        private bool _isMaximized = false;
         
         public MainWindow()
         {
@@ -56,6 +67,16 @@ namespace HexaFlow.Views
             
             // 等待界面加载完成后获取UI元素
             Loaded += async (s, e) => {
+                // 保存原始窗口状态
+                _originalWidth = Width;
+                _originalHeight = Height;
+                _originalLeft = Left;
+                _originalTop = Top;
+                _originalWindowState = WindowState;
+                
+                // 监听窗口状态变化事件
+                StateChanged += MainWindow_StateChanged;
+                
                 var inputTextBox = (TextBox)FindName("InputTextBox");
                 var historyListBox = (ListBox)FindName("HistoryListBox");
                 
@@ -88,12 +109,97 @@ namespace HexaFlow.Views
         
         private void MaximizeButton_Click(object sender, RoutedEventArgs e)
         {
-            WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+            if (_isMaximized)
+            {
+                // 恢复到原始大小和位置
+                Width = _originalWidth;
+                Height = _originalHeight;
+                Left = _originalLeft;
+                Top = _originalTop;
+                _isMaximized = false;
+            }
+            else
+            {
+                // 保存当前窗口状态
+                _originalWidth = Width;
+                _originalHeight = Height;
+                _originalLeft = Left;
+                _originalTop = Top;
+                _originalWindowState = WindowState;
+                
+                // 获取当前屏幕的工作区
+                RECT workArea = GetMonitorWorkArea();
+                
+                // 设置窗口大小为当前屏幕的工作区大小（不遮挡任务栏）
+                WindowState = WindowState.Normal; // 先恢复正常状态
+                Left = workArea.Left;
+                Top = workArea.Top;
+                Width = workArea.Right - workArea.Left;
+                Height = workArea.Bottom - workArea.Top;
+                _isMaximized = true;
+            }
         }
         
         private void CloseButton_Click(object sender, RoutedEventArgs e)
         {
             Close();
+        }
+        
+        private void MainWindow_StateChanged(object sender, EventArgs e)
+        {
+            // 当窗口通过其他方式（如拖拽边缘或双击标题栏）最大化时，调整为当前屏幕的工作区大小
+            if (WindowState == WindowState.Maximized && !_isMaximized)
+            {
+                // 获取当前屏幕的工作区
+                RECT workArea = GetMonitorWorkArea();
+                
+                // 立即调整为当前屏幕的工作区大小（不遮挡任务栏）
+                WindowState = WindowState.Normal; // 先恢复正常状态
+                Left = workArea.Left;
+                Top = workArea.Top;
+                Width = workArea.Right - workArea.Left;
+                Height = workArea.Bottom - workArea.Top;
+                _isMaximized = true;
+            }
+        }
+        
+        [StructLayout(LayoutKind.Sequential)]
+        public struct RECT
+        {
+            public int Left;
+            public int Top;
+            public int Right;
+            public int Bottom;
+        }
+
+        [DllImport("user32.dll")]
+        public static extern IntPtr MonitorFromWindow(IntPtr hwnd, uint dwFlags);
+
+        [DllImport("user32.dll")]
+        public static extern bool GetMonitorInfo(IntPtr hMonitor, ref MONITORINFO lpmi);
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct MONITORINFO
+        {
+            public uint cbSize;
+            public RECT rcMonitor;
+            public RECT rcWork;
+            public uint dwFlags;
+        }
+
+        private const uint MONITOR_DEFAULTTONEAREST = 0x00000002;
+        
+        private RECT GetMonitorWorkArea()
+        {
+            IntPtr hWnd = new System.Windows.Interop.WindowInteropHelper(this).Handle;
+            IntPtr hMonitor = MonitorFromWindow(hWnd, MONITOR_DEFAULTTONEAREST);
+            
+            MONITORINFO monitorInfo = new MONITORINFO();
+            monitorInfo.cbSize = (uint)Marshal.SizeOf(monitorInfo);
+            
+            GetMonitorInfo(hMonitor, ref monitorInfo);
+            
+            return monitorInfo.rcWork;
         }
         
         private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -183,6 +289,15 @@ namespace HexaFlow.Views
                 UpdateCurrentModelDisplay();
             }
         }
+        
+        private void ModelComboBox_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (ModelComboBox != null)
+            {
+                // 切换下拉列表的展开状态
+                ModelComboBox.IsDropDownOpen = !ModelComboBox.IsDropDownOpen;
+            }
+        }
 
         /// <summary>
         /// 更新Ollama连接状态显示
@@ -266,6 +381,7 @@ namespace HexaFlow.Views
         private async void SendMessage()
         {
             var inputTextBox = (TextBox)FindName("InputTextBox");
+            var sendButton = (Button)FindName("SendButton");
             string message = inputTextBox.Text?.Trim();
             
             if (string.IsNullOrWhiteSpace(message) || message == "输入消息...")
@@ -273,35 +389,67 @@ namespace HexaFlow.Views
                 return; // 不发送空消息
             }
             
-            // 添加用户消息到聊天记录
-            var userMessage = new Message("user", message);
-            _messages.Add(userMessage);
-            AddMessageToUI(userMessage);
-            
-            // 如果是新对话，自动生成标题
-            if (_currentConversation.Id == 0 && _messages.Count == 1)
+            // 禁用发送按钮，更改图标为刷新图标并开始旋转
+            if (sendButton != null)
             {
-                _currentConversation.Title = _chatHistoryService.GenerateTitleFromFirstMessage(message);
+                sendButton.Content = "\uE72C"; // 刷新图标
+                sendButton.IsEnabled = false;
+                
+                // 添加旋转动画
+                var rotateTransform = new RotateTransform();
+                sendButton.RenderTransform = rotateTransform;
+                sendButton.RenderTransformOrigin = new Point(0.5, 0.5);
+                
+                var animation = new DoubleAnimation(0, 360, TimeSpan.FromSeconds(2));
+                animation.RepeatBehavior = RepeatBehavior.Forever;
+                
+                rotateTransform.BeginAnimation(RotateTransform.AngleProperty, animation);
             }
             
-            // 清空输入框
-            inputTextBox.Text = "";
-            
-            // 滚动到底部
-            await ScrollToBottomAsync();
-            
-            // 添加助手消息占位符，显示加载动画
-            var assistantMessage = new Message("assistant", "");
-            _messages.Add(assistantMessage);
-            var assistantElement = AddMessageToUI(assistantMessage);
-            
-            // 开始生成助手回复
-            await GenerateAssistantResponse(assistantMessage, assistantElement);
-            
-            // 更新对话时间并保存
-            _currentConversation.UpdatedAt = DateTime.Now;
-            _currentConversation.Messages = _messages.ToList(); // 保存消息副本
-            await _chatHistoryService.SaveConversationAsync(_currentConversation);
+            try
+            {
+                // 添加用户消息到聊天记录
+                var userMessage = new Message("user", message);
+                _messages.Add(userMessage);
+                AddMessageToUI(userMessage);
+                
+                // 如果是新对话，自动生成标题
+                if (_currentConversation.Id == 0 && _messages.Count == 1)
+                {
+                    _currentConversation.Title = _chatHistoryService.GenerateTitleFromFirstMessage(message);
+                }
+                
+                // 清空输入框
+                inputTextBox.Text = "";
+                
+                // 滚动到底部
+                await ScrollToBottomAsync();
+                
+                // 添加助手消息占位符，显示加载动画
+                var assistantMessage = new Message("assistant", "");
+                _messages.Add(assistantMessage);
+                var assistantElement = AddMessageToUI(assistantMessage);
+                
+                // 开始生成助手回复
+                await GenerateAssistantResponse(assistantMessage, assistantElement);
+                
+                // 更新对话时间并保存
+                _currentConversation.UpdatedAt = DateTime.Now;
+                _currentConversation.Messages = _messages.ToList(); // 保存消息副本
+                await _chatHistoryService.SaveConversationAsync(_currentConversation);
+            }
+            finally
+            {
+                // 恢复发送按钮
+                if (sendButton != null)
+                {
+                    // 停止旋转动画
+                    sendButton.ClearValue(Button.RenderTransformProperty);
+                    
+                    sendButton.Content = "\uF0AD"; // 向上箭头图标
+                    sendButton.IsEnabled = true;
+                }
+            }
         }
         
         /// <summary>

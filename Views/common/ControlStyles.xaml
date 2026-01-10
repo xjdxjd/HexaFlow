@@ -202,8 +202,8 @@
         <Setter Property="Background" Value="{StaticResource ListItemBackgroundBrush}"/>
         <Setter Property="Foreground" Value="{StaticResource PrimaryTextBrush}"/>
         <Setter Property="BorderThickness" Value="0"/>
-        <Setter Property="Padding" Value="{StaticResource DefaultThickness}"/>
-        <Setter Property="Margin" Value="{StaticResource SmallMargin}"/>
+        <Setter Property="Padding" Value="{StaticResource ListItemThickness}"/>
+        <Setter Property="Margin" Value="{StaticResource ListItemMargin}"/>
         <Setter Property="FontFamily" Value="{StaticResource DefaultFont}"/>
         <Setter Property="FontSize" Value="{StaticResource DefaultFontSize}"/>
         <Setter Property="Template">

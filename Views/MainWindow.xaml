@@ -6,10 +6,10 @@
         xmlns:local="clr-namespace:HexaFlow.Views"
         mc:Ignorable="d"
         Title="HexaFlow" 
-        Height="720" 
-        Width="1280"
-        MinHeight="600"
-        MinWidth="1024"
+        Height="1080" 
+        Width="1920"
+        MinHeight="720"
+        MinWidth="1280"
         Background="{StaticResource MainBackgroundBrush}"
         WindowStartupLocation="CenterScreen"
         WindowStyle="None">
@@ -134,7 +134,8 @@
                                 <ComboBox x:Name="ModelComboBox" Grid.Column="0" 
                                           Height="36"
                                           Style="{StaticResource JadeComboBoxStyle}"
-                                          MouseDoubleClick="ModelComboBox_MouseDoubleClick"/>
+                                          MouseDoubleClick="ModelComboBox_MouseDoubleClick"
+                                          PreviewMouseDown="ModelComboBox_PreviewMouseDown"/>
 
                                 <Button Grid.Column="1" 
                                         Style="{StaticResource JadeButtonStyle}"
@@ -229,11 +230,13 @@
                             <Button Style="{StaticResource JadeIconTextButtonStyle}"
                                     Margin="0,0,12,0"
                                     Width="120"
+                                    Height="36"
                                     Content="系统设置"
                                     Tag="&#xE713;" FontFamily="Segoe MDL2 Assets"/>
                             <Button x:Name="ModelManagerButton"
                                     Style="{StaticResource JadeIconTextButtonStyle}"
                                     Width="120"
+                                    Height="36"
                                     Content="模型管理"
                                     Tag="&#xF1AD;" FontFamily="Segoe MDL2 Assets"/>
                         </StackPanel>
@@ -297,11 +300,34 @@
 
                             <Button x:Name="SendButton" Grid.Column="1"
                                     Style="{StaticResource JadeButtonStyle}"
-                                    Content="发送"
-                                    Width="80"
-                                    Height="36"
+                                    Content="&#xF0AD;"
+                                    Width="40"
+                                    Height="40"
                                     Margin="12,0,0,0"
-                                    Click="SendButton_Click"/>
+                                    FontFamily="Segoe MDL2 Assets"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Click="SendButton_Click">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border x:Name="border" 
+                                                Background="{TemplateBinding Background}" 
+                                                CornerRadius="20"
+                                                Padding="{TemplateBinding Padding}">
+                                            <ContentPresenter HorizontalAlignment="Center" 
+                                                              VerticalAlignment="Center"/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="border" Property="Background" Value="{StaticResource PrimaryButtonHoverBrush}"/>
+                                            </Trigger>
+                                            <Trigger Property="IsPressed" Value="True">
+                                                <Setter TargetName="border" Property="Background" Value="{StaticResource PrimaryButtonPressedBrush}"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
                         </Grid>
                     </Border>
                 </Grid>
