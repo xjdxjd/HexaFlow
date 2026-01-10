@@ -226,14 +226,16 @@
                             Padding="{StaticResource DefaultThickness}">
                         <StackPanel Orientation="Horizontal" 
                                     HorizontalAlignment="Center">
-                            <Button Style="{StaticResource JadeButtonStyle}"
+                            <Button Style="{StaticResource JadeIconTextButtonStyle}"
                                     Margin="0,0,12,0"
                                     Width="120"
-                                    Content="系统设置"/>
+                                    Content="系统设置"
+                                    Tag="&#xE713;" FontFamily="Segoe MDL2 Assets"/>
                             <Button x:Name="ModelManagerButton"
-                                    Style="{StaticResource JadeButtonStyle}"
+                                    Style="{StaticResource JadeIconTextButtonStyle}"
                                     Width="120"
-                                    Content="模型管理"/>
+                                    Content="模型管理"
+                                    Tag="&#xF1AD;" FontFamily="Segoe MDL2 Assets"/>
                         </StackPanel>
                     </Border>
                 </Grid>

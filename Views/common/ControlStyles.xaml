@@ -6,7 +6,7 @@
         <Setter Property="Background" Value="{StaticResource PrimaryButtonBrush}"/>
         <Setter Property="Foreground" Value="{StaticResource AccentTextBrush}"/>
         <Setter Property="BorderThickness" Value="0"/>
-        <Setter Property="Padding" Value="16,10"/>
+        <Setter Property="Padding" Value="12,6"/>
         <Setter Property="FontFamily" Value="{StaticResource DefaultFont}"/>
         <Setter Property="FontSize" Value="{StaticResource DefaultFontSize}"/>
         <Setter Property="FontWeight" Value="Medium"/>
@@ -19,6 +19,42 @@
                             Padding="{TemplateBinding Padding}">
                         <ContentPresenter HorizontalAlignment="Center" 
                                           VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="border" Property="Background" Value="{StaticResource PrimaryButtonHoverBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="border" Property="Background" Value="{StaticResource PrimaryButtonPressedBrush}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    
+    <!-- SVG图标+文字按钮样式 -->
+    <Style x:Key="JadeIconTextButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="{StaticResource PrimaryButtonBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource AccentTextBrush}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="12,6"/>
+        <Setter Property="FontFamily" Value="{StaticResource DefaultFont}"/>
+        <Setter Property="FontSize" Value="{StaticResource DefaultFontSize}"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="border" 
+                            Background="{TemplateBinding Background}" 
+                            CornerRadius="{StaticResource DefaultCornerRadius}"
+                            Padding="{TemplateBinding Padding}">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Viewbox Width="16" Height="16" Margin="0,0,6,0">
+                                <TextBlock Text="{TemplateBinding Tag}" FontFamily="Segoe MDL2 Assets" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="{Binding Path=Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                            </Viewbox>
+                            <ContentPresenter x:Name="TextPresenter" Content="{TemplateBinding Content}" TextElement.FontFamily="{StaticResource DefaultFont}"/>
+                        </StackPanel>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
