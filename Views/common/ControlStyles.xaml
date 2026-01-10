@@ -218,4 +218,93 @@
         <Setter Property="Margin" Value="60,5,20,5"/>
         <Setter Property="HorizontalAlignment" Value="Left"/>
     </Style>
+    
+    <!-- 右键菜单样式 -->
+    <Style x:Key="JadeContextMenuStyle" TargetType="ContextMenu">
+        <Setter Property="Background" Value="{StaticResource FloatingPanelBackgroundBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource SecondaryTextBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ContextMenu">
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="{StaticResource DefaultCornerRadius}"
+                            Padding="{TemplateBinding Padding}">
+                        <ItemsPresenter Margin="{TemplateBinding Padding}"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    
+    <!-- 菜单项样式 -->
+    <Style x:Key="JadeMenuItemStyle" TargetType="MenuItem">
+        <Setter Property="Background" Value="{StaticResource FloatingPanelBackgroundBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource PrimaryTextBrush}"/>
+        <Setter Property="Padding" Value="16,10"/>
+        <Setter Property="Margin" Value="0"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="MenuItem">
+                    <Border x:Name="Border" 
+                            Background="{TemplateBinding Background}" 
+                            Padding="{TemplateBinding Padding}"
+                            Margin="{TemplateBinding Margin}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" SharedSizeGroup="Icon"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto" SharedSizeGroup="Shortcut"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <ContentPresenter x:Name="Icon" 
+                                              Grid.Column="0" 
+                                              VerticalAlignment="Center" 
+                                              ContentSource="Icon"/>
+                            <ContentPresenter x:Name="HeaderHost" 
+                                              Grid.Column="1" 
+                                              VerticalAlignment="Center" 
+                                              ContentSource="Header" 
+                                              RecognizesAccessKey="True"/>
+                            <ContentPresenter x:Name="InputGestureText" 
+                                              Grid.Column="2" 
+                                              VerticalAlignment="Center" 
+                                              ContentSource="InputGestureText"/>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Border" Property="Background" Value="{StaticResource PrimaryButtonBrush}"/>
+                            <Setter Property="Foreground" Value="{StaticResource AccentTextBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Foreground" Value="{StaticResource SecondaryTextBrush}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    
+    <!-- 子菜单项样式 -->
+    <Style x:Key="JadeSubMenuItemStyle" TargetType="MenuItem" BasedOn="{StaticResource JadeMenuItemStyle}"/>
+    
+    <!-- 分隔符样式 -->
+    <Style x:Key="JadeSeparatorStyle" TargetType="Separator">
+        <Setter Property="Height" Value="1"/>
+        <Setter Property="Background" Value="{StaticResource SecondaryTextBrush}"/>
+        <Setter Property="Margin" Value="10,2,10,2"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Separator">
+                    <Border Height="{TemplateBinding Height}"
+                            Background="{TemplateBinding Background}"
+                            Margin="{TemplateBinding Margin}"/>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
 </ResourceDictionary>

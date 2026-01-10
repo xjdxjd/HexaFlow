@@ -9,6 +9,10 @@ using HexaFlow.Models;
 using System.Collections.ObjectModel;
 using System.Windows.Documents;
 using System.Windows.Media;
+using System.Linq;
+using System.Windows.Data;
+using Microsoft.Win32;
+using Newtonsoft.Json;
 
 namespace HexaFlow.Views
 {
@@ -346,6 +350,39 @@ namespace HexaFlow.Views
             Grid.SetRow(contentTextBlock, 1);
             grid.Children.Add(contentTextBlock);
 
+            // 添加右键菜单
+            var contextMenu = new ContextMenu();
+            contextMenu.Style = (Style)FindResource("JadeContextMenuStyle");
+            
+            // 为用户消息添加编辑选项
+            if (message.Role == "user")
+            {
+                var editMenuItem = new MenuItem { Header = "编辑消息" };
+                editMenuItem.Click += EditUserMessage_Click;
+                editMenuItem.DataContext = message;
+                editMenuItem.Style = (Style)FindResource("JadeMenuItemStyle");
+                contextMenu.Items.Add(editMenuItem);
+                
+                var separator = new Separator();
+                separator.Style = (Style)FindResource("JadeSeparatorStyle");
+                contextMenu.Items.Add(separator);
+            }
+            
+            // 添加复制选项
+            var copyMenuItem = new MenuItem { Header = "复制消息" };
+            copyMenuItem.Click += CopyMessage_Click;
+            copyMenuItem.DataContext = message;
+            copyMenuItem.Style = (Style)FindResource("JadeMenuItemStyle");
+            contextMenu.Items.Add(copyMenuItem);
+            
+            var regenerateMenuItem = new MenuItem { Header = "重新生成回复" };
+            regenerateMenuItem.Click += RegenerateResponse_Click;
+            regenerateMenuItem.DataContext = message;
+            regenerateMenuItem.Style = (Style)FindResource("JadeMenuItemStyle");
+            contextMenu.Items.Add(regenerateMenuItem);
+            
+            messageBubble.ContextMenu = contextMenu;
+
             // 添加到消息面板
             var messagesPanel = (StackPanel)FindName("MessagesPanel");
             messagesPanel.Children.Add(messageBubble);
@@ -513,6 +550,411 @@ namespace HexaFlow.Views
             
             // 重新加载历史对话列表
             _ = LoadHistoryConversationsAsync();
+        }
+        
+        #region 操作便捷功能
+        
+        /// <summary>
+        /// 复制单条消息
+        /// </summary>
+        private void CopyMessage_Click(object sender, RoutedEventArgs e)
+        {
+            var menuItem = sender as MenuItem;
+            if (menuItem?.DataContext is Message message)
+            {
+                Clipboard.SetText(message.Content);
+                ShowNotification("消息已复制到剪贴板");
+            }
+        }
+        
+        /// <summary>
+        /// 复制全部对话
+        /// </summary>
+        private void CopyAllMessages_Click(object sender, RoutedEventArgs e)
+        {
+            var allContent = string.Join("\n\n", _messages.Select(msg => 
+                $"[{msg.Role.ToUpper()}]: {msg.Content}"));
+            Clipboard.SetText(allContent);
+            ShowNotification("全部对话已复制到剪贴板");
+        }
+        
+        /// <summary>
+        /// 重新生成当前回答
+        /// </summary>
+        private async void RegenerateResponse_Click(object sender, RoutedEventArgs e)
+        {
+            if (_isGeneratingResponse) return;
+            
+            // 找到最后一个用户消息和对应的助手消息
+            var lastUserMessageIndex = -1;
+            var lastAssistantMessageIndex = -1;
+            
+            for (int i = _messages.Count - 1; i >= 0; i--)
+            {
+                if (_messages[i].Role == "user")
+                {
+                    lastUserMessageIndex = i;
+                    break;
+                }
+            }
+            
+            for (int i = _messages.Count - 1; i >= 0; i--)
+            {
+                if (_messages[i].Role == "assistant")
+                {
+                    lastAssistantMessageIndex = i;
+                    break;
+                }
+            }
+            
+            if (lastUserMessageIndex != -1)
+            {
+                // 如果存在之前的助手回复，移除它
+                if (lastAssistantMessageIndex != -1 && lastAssistantMessageIndex > lastUserMessageIndex)
+                {
+                    // 从UI中移除助手消息
+                    var messagesPanel = (StackPanel)FindName("MessagesPanel");
+                    if (messagesPanel.Children.Count > 0)
+                    {
+                        messagesPanel.Children.RemoveAt(messagesPanel.Children.Count - 1);
+                    }
+                    
+                    // 从消息列表中移除助手消息
+                    _messages.RemoveAt(lastAssistantMessageIndex);
+                }
+                
+                // 添加新的助手消息占位符
+                var assistantMessage = new Message("assistant", "");
+                _messages.Add(assistantMessage);
+                var assistantElement = AddMessageToUI(assistantMessage);
+                
+                // 生成新的回复
+                await GenerateAssistantResponse(assistantMessage, assistantElement);
+                
+                // 更新对话时间并保存
+                _currentConversation.UpdatedAt = DateTime.Now;
+                _currentConversation.Messages = _messages.ToList();
+                await _chatHistoryService.SaveConversationAsync(_currentConversation);
+            }
+        }
+        
+        /// <summary>
+        /// 编辑用户消息并重新提交
+        /// </summary>
+        private void EditUserMessage_Click(object sender, RoutedEventArgs e)
+        {
+            var menuItem = sender as MenuItem;
+            if (menuItem?.DataContext is Message message && message.Role == "user")
+            {
+                var index = _messages.IndexOf(message);
+                if (index != -1)
+                {
+                    // 显示编辑对话框
+                    var editDialog = new TextBoxDialog("编辑消息", "请输入新的消息内容：", message.Content);
+                    editDialog.Owner = this;
+                    if (editDialog.ShowDialog() == true)
+                    {
+                        var newContent = editDialog.Answer;
+                        if (!string.IsNullOrWhiteSpace(newContent))
+                        {
+                            // 更新消息内容
+                            _messages[index] = new Message(message.Role, newContent);
+                            
+                            // 更新UI
+                            var messagesPanel = (StackPanel)FindName("MessagesPanel");
+                            if (index < messagesPanel.Children.Count)
+                            {
+                                var messageBubble = (Border)messagesPanel.Children[index];
+                                var grid = (Grid)messageBubble.Child;
+                                var contentTextBlock = (TextBlock)grid.Children[1];
+                                contentTextBlock.Text = newContent;
+                            }
+                            
+                            // 重新生成后续的助手回复
+                            ReSubmitFromIndex(index);
+                        }
+                    }
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 从指定索引重新提交对话
+        /// </summary>
+        private async void ReSubmitFromIndex(int startIndex)
+        {
+            // 移除startIndex之后的所有消息
+            var messagesToRemove = new List<int>();
+            for (int i = _messages.Count - 1; i > startIndex; i--)
+            {
+                messagesToRemove.Add(i);
+            }
+            
+            // 从后往前移除，避免索引变化
+            foreach (var index in messagesToRemove)
+            {
+                _messages.RemoveAt(index);
+            }
+            
+            // 从UI中移除对应的消息元素
+            var messagesPanel = (StackPanel)FindName("MessagesPanel");
+            for (int i = messagesPanel.Children.Count - 1; i > startIndex; i--)
+            {
+                messagesPanel.Children.RemoveAt(i);
+            }
+            
+            // 如果最后一个消息是用户消息，则重新生成助手回复
+            if (_messages.Count > 0 && _messages[_messages.Count - 1].Role == "user")
+            {
+                var assistantMessage = new Message("assistant", "");
+                _messages.Add(assistantMessage);
+                var assistantElement = AddMessageToUI(assistantMessage);
+                
+                await GenerateAssistantResponse(assistantMessage, assistantElement);
+                
+                // 更新对话时间并保存
+                _currentConversation.UpdatedAt = DateTime.Now;
+                _currentConversation.Messages = _messages.ToList();
+                await _chatHistoryService.SaveConversationAsync(_currentConversation);
+            }
+        }
+        
+        /// <summary>
+        /// 清空当前对话
+        /// </summary>
+        private void ClearCurrentConversation_Click(object sender, RoutedEventArgs e)
+        {
+            if (MessageBox.Show("确定要清空当前对话吗？此操作无法撤销。", "确认清空", 
+                MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+            {
+                _messages.Clear();
+                
+                // 清空当前消息显示
+                var messagesPanel = (StackPanel)FindName("MessagesPanel");
+                messagesPanel.Children.Clear();
+                
+                // 重置当前对话
+                _currentConversation = new Conversation();
+                
+                ShowNotification("对话已清空");
+            }
+        }
+        
+        #endregion
+        
+        #region 导出功能
+        
+        /// <summary>
+        /// 导出对话
+        /// </summary>
+        private void ExportConversation_Click(object sender, RoutedEventArgs e)
+        {
+            var menuItem = sender as MenuItem;
+            if (menuItem != null)
+            {
+                var exportType = menuItem.Tag?.ToString();
+                ExportConversation(exportType);
+            }
+        }
+        
+        /// <summary>
+        /// 导出对话为指定格式
+        /// </summary>
+        private void ExportConversation(string format)
+        {
+            if (_messages == null || !_messages.Any())
+            {
+                ShowNotification("当前没有对话可导出");
+                return;
+            }
+            
+            var saveFileDialog = new Microsoft.Win32.SaveFileDialog
+            {
+                Filter = GetFilterByFormat(format),
+                FileName = _currentConversation.Title != "新对话" ? _currentConversation.Title : "未命名对话",
+                DefaultExt = GetExtensionByFormat(format)
+            };
+            
+            if (saveFileDialog.ShowDialog() == true)
+            {
+                try
+                {
+                    string content = GetExportContent(format);
+                    System.IO.File.WriteAllText(saveFileDialog.FileName, content, System.Text.Encoding.UTF8);
+                    ShowNotification($"对话已导出为{format?.ToUpper() ?? "未知"}格式");
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"导出失败: {ex.Message}", "导出错误", 
+                        MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 根据格式获取过滤器
+        /// </summary>
+        private string GetFilterByFormat(string format)
+        {
+            switch (format?.ToLower())
+            {
+                case "markdown":
+                    return "Markdown 文件 (*.md)|*.md|所有文件 (*.*)|*.*";
+                case "json":
+                    return "JSON 文件 (*.json)|*.json|所有文件 (*.*)|*.*";
+                case "txt":
+                    return "文本文件 (*.txt)|*.txt|所有文件 (*.*)|*.*";
+                default:
+                    return "所有文件 (*.*)|*.*";
+            }
+        }
+        
+        /// <summary>
+        /// 根据格式获取扩展名
+        /// </summary>
+        private string GetExtensionByFormat(string format)
+        {
+            switch (format?.ToLower())
+            {
+                case "markdown":
+                    return ".md";
+                case "json":
+                    return ".json";
+                case "txt":
+                    return ".txt";
+                default:
+                    return ".txt";
+            }
+        }
+        
+        /// <summary>
+        /// 获取导出内容
+        /// </summary>
+        private string GetExportContent(string format)
+        {
+            switch (format?.ToLower())
+            {
+                case "markdown":
+                    return GetMarkdownContent();
+                case "json":
+                    return GetJsonContent();
+                case "txt":
+                    return GetTxtContent();
+                default:
+                    return GetTxtContent(); // 默认返回TXT格式
+            }
+        }
+        
+        /// <summary>
+        /// 获取Markdown格式内容
+        /// </summary>
+        private string GetMarkdownContent()
+        {
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine($"# {_currentConversation.Title ?? "对话记录"}\n");
+            sb.AppendLine($"日期: {_currentConversation.CreatedAt:yyyy-MM-dd HH:mm:ss}\n");
+            
+            foreach (var msg in _messages)
+            {
+                var role = msg.Role == "user" ? "用户" : "助手";
+                var prefix = msg.Role == "user" ? "> [!NOTE]" : "> [!TIP]";
+                sb.AppendLine($"{prefix} **{role}**\n> \n> {msg.Content.Replace("\n", "\n> ")}\n\n---\n");
+            }
+            
+            return sb.ToString();
+        }
+        
+        /// <summary>
+        /// 获取JSON格式内容
+        /// </summary>
+        private string GetJsonContent()
+        {
+            var conversationData = new
+            {
+                Title = _currentConversation.Title,
+                CreatedAt = _currentConversation.CreatedAt,
+                UpdatedAt = _currentConversation.UpdatedAt,
+                Messages = _messages.Select(m => new { m.Role, m.Content, m.Timestamp }).ToList()
+            };
+            
+            return Newtonsoft.Json.JsonConvert.SerializeObject(conversationData, 
+                Newtonsoft.Json.Formatting.Indented);
+        }
+        
+        /// <summary>
+        /// 获取TXT格式内容
+        /// </summary>
+        private string GetTxtContent()
+        {
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine($"{_currentConversation.Title ?? "对话记录"}");
+            sb.AppendLine($"日期: {_currentConversation.CreatedAt:yyyy-MM-dd HH:mm:ss}");
+            sb.AppendLine(new string('=', 50));
+            
+            foreach (var msg in _messages)
+            {
+                var role = msg.Role == "user" ? "用户" : "助手";
+                sb.AppendLine($"[{role}] {msg.Timestamp:HH:mm}: {msg.Content}");
+                sb.AppendLine();
+            }
+            
+            return sb.ToString();
+        }
+        
+        #endregion
+        
+        /// <summary>
+        /// 显示通知
+        /// </summary>
+        private void ShowNotification(string message)
+        {
+            // 创建临时通知文本块
+            var notification = new Border
+            {
+                Background = (Brush)FindResource("PrimaryButtonBrush"),
+                Padding = new Thickness(12, 8, 12, 8),
+                Margin = new Thickness(10),
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Top,
+                CornerRadius = new CornerRadius(6),
+                Visibility = Visibility.Visible
+            };
+            
+            var textBlock = new TextBlock
+            {
+                Text = message,
+                FontSize = 14,
+                Foreground = (Brush)FindResource("AccentTextBrush"),
+                TextAlignment = TextAlignment.Center
+            };
+            
+            notification.Child = textBlock;
+            
+            // 添加到主窗口的Grid中
+            var mainGrid = (Grid)FindName("MainGrid");
+            if (mainGrid != null)
+            {
+                mainGrid.Children.Add(notification);
+                
+                // 使用Dispatcher延时以确保UI已更新
+                Dispatcher.BeginInvoke(new Action(() => {
+                    // 设置位置
+                    Grid.SetRowSpan(notification, 2); // 跨越所有行
+                    
+                    // 创建定时器，3秒后移除通知
+                    var timer = new System.Windows.Threading.DispatcherTimer();
+                    timer.Interval = TimeSpan.FromSeconds(3);
+                    timer.Tick += (s, e) =>
+                    {
+                        if (mainGrid.Children.Contains(notification))
+                        {
+                            mainGrid.Children.Remove(notification);
+                        }
+                        timer.Stop();
+                    };
+                    timer.Start();
+                }));
+            }
         }
     }
 }

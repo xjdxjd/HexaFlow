@@ -1,0 +1,76 @@
+<Window x:Class="HexaFlow.Views.TextBoxDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="编辑消息"
+        Height="350"
+        Width="500"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="{StaticResource DialogBackgroundBrush}">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="6"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- 顶部提示条 -->
+        <Rectangle Grid.Row="0" Fill="{StaticResource PrimaryButtonBrush}"/>
+
+        <!-- 标题区域 -->
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="16,20,16,16">
+            <TextBlock Text="✎" 
+                       FontSize="24"
+                       Foreground="{StaticResource PrimaryButtonBrush}"
+                       VerticalAlignment="Center"
+                       Margin="0,0,16,0"/>
+            <TextBlock x:Name="TitleTextBlock"
+                       Text="编辑消息"
+                       FontSize="18"
+                       FontWeight="Medium"
+                       Foreground="{StaticResource PrimaryTextBrush}"
+                       VerticalAlignment="Center"/>
+        </StackPanel>
+
+        <!-- 提示文本 -->
+        <TextBlock Grid.Row="1" 
+                   x:Name="PromptTextBlock"
+                   Text="请输入新的消息内容：" 
+                   Margin="70,45,16,16"
+                   TextWrapping="Wrap"
+                   Foreground="{StaticResource SecondaryTextBrush}"/>
+
+        <!-- 文本框 -->
+        <TextBox Grid.Row="2" 
+                 x:Name="AnswerTextBox" 
+                 Style="{StaticResource JadeTextBoxStyle}"
+                 AcceptsReturn="True"
+                 TextWrapping="Wrap"
+                 VerticalScrollBarVisibility="Auto"
+                 Margin="16,0,16,10"/>
+
+        <!-- 按钮区域 -->
+        <StackPanel Grid.Row="3" 
+                    Orientation="Horizontal" 
+                    HorizontalAlignment="Right"
+                    Margin="0,0,16,16">
+            <Button x:Name="CancelButton"
+                    Style="{StaticResource JadeButtonStyle}"
+                    Content="取消" 
+                    Click="CancelButton_Click" 
+                    IsCancel="True"
+                    Width="80"
+                    Margin="0,0,10,0"/>
+            <Button x:Name="OkButton"
+                    Style="{StaticResource JadeButtonStyle}"
+                    Content="确定" 
+                    Click="OkButton_Click" 
+                    IsDefault="True"
+                    Width="80"/>
+        </StackPanel>
+    </Grid>
+</Window>

@@ -14,7 +14,7 @@
         WindowStartupLocation="CenterScreen"
         WindowStyle="None">
 
-    <Grid>
+    <Grid x:Name="MainGrid">
         <Grid.RowDefinitions>
             <RowDefinition Height="56"/>
             <RowDefinition Height="*"/>
@@ -255,7 +255,19 @@
                                 VerticalScrollBarVisibility="Auto"
                                 HorizontalScrollBarVisibility="Disabled"
                                 Margin="0,0,0,20">
-                        <StackPanel x:Name="MessagesPanel"/>
+                        <StackPanel x:Name="MessagesPanel">
+                            <StackPanel.ContextMenu>
+                                <ContextMenu Style="{StaticResource JadeContextMenuStyle}">
+                                    <MenuItem Header="清空当前对话" Click="ClearCurrentConversation_Click" Style="{StaticResource JadeMenuItemStyle}"/>
+                                    <Separator Style="{StaticResource JadeSeparatorStyle}"/>
+                                    <MenuItem Header="导出对话" Style="{StaticResource JadeMenuItemStyle}">
+                                        <MenuItem Header="导出为 Markdown" Tag="markdown" Style="{StaticResource JadeSubMenuItemStyle}"/>
+                                        <MenuItem Header="导出为 JSON" Tag="json" Style="{StaticResource JadeSubMenuItemStyle}"/>
+                                        <MenuItem Header="导出为 TXT" Tag="txt" Style="{StaticResource JadeSubMenuItemStyle}"/>
+                                    </MenuItem>
+                                </ContextMenu>
+                            </StackPanel.ContextMenu>
+                        </StackPanel>
                     </ScrollViewer>
 
                     <!-- 输入浮岛 -->
