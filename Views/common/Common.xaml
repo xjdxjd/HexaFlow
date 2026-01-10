@@ -1,0 +1,24 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:System="clr-namespace:System;assembly=mscorlib">
+
+    <!-- 公共尺寸常量 -->
+    <CornerRadius x:Key="DefaultCornerRadius">14</CornerRadius>
+    <CornerRadius x:Key="LargeCornerRadius">18</CornerRadius>
+    <System:Double x:Key="DefaultPadding">14</System:Double>
+    <System:Double x:Key="DefaultMargin">12</System:Double>
+    <System:Double x:Key="DefaultFontSize">12</System:Double>
+    <System:Double x:Key="TitleFontSize">14</System:Double>
+    <System:Double x:Key="LargeTitleFontSize">18</System:Double>
+    <Thickness x:Key="DefaultThickness">14</Thickness>
+    <Thickness x:Key="SmallMargin">10,10,10,10</Thickness>
+
+    <!-- 字体 -->
+    <FontFamily x:Key="DefaultFont">HarmonyOS Sans SC</FontFamily>
+    <FontFamily x:Key="AlternativeFont">Microsoft YaHei UI</FontFamily>
+
+    <!-- 动画时长 -->
+    <Duration x:Key="FastAnimation">0:0:0.2</Duration>
+    <Duration x:Key="NormalAnimation">0:0:0.25</Duration>
+    <Duration x:Key="SlowAnimation">0:0:0.35</Duration>
+</ResourceDictionary>

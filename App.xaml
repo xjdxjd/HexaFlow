@@ -5,6 +5,14 @@
              StartupUri="Views/MainWindow.xaml">
     <Application.Resources>
         <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Views/common/Common.xaml"/>
+                <ResourceDictionary Source="Views/common/BrushesFixed.xaml"/>
+                <ResourceDictionary Source="Views/common/Animations.xaml"/>
+                <ResourceDictionary Source="Views/common/ControlStyles.xaml"/>
+                <ResourceDictionary Source="Views/common/FloatingPanelStyles.xaml"/>
+                <ResourceDictionary Source="Views/common/DialogStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

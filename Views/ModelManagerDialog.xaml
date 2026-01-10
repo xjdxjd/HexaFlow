@@ -1,0 +1,108 @@
+<Window x:Class="HexaFlow.Views.ModelManagerDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:HexaFlow.Views"
+        mc:Ignorable="d"
+        Title="模型管理" 
+        Height="600" 
+        Width="700"
+        Style="{StaticResource BaseDialogWindowStyle}"
+        WindowStartupLocation="CenterOwner">
+
+    <Border Background="{StaticResource DialogBackgroundBrush}"
+            CornerRadius="{StaticResource DefaultCornerRadius}"
+            BorderThickness="1"
+            BorderBrush="{StaticResource SecondaryTextBrush}">
+        <Grid Margin="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- 顶部工具栏 -->
+            <Grid Grid.Row="0" Margin="0,0,0,20">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBox x:Name="SearchTextBox"
+                         Grid.Column="0"
+                         Style="{StaticResource JadeTextBoxStyle}"
+                         Height="36"
+                         Margin="0,0,12,0"
+                         Text="搜索模型..."/>
+
+                <Button x:Name="PullModelButton"
+                        Grid.Column="1"
+                        Style="{StaticResource JadeButtonStyle}"
+                        Content="拉取新模型"
+                        Height="36"
+                        Width="120"/>
+            </Grid>
+
+            <!-- 模型列表 -->
+            <Border Grid.Row="1" 
+                    Background="{StaticResource FloatingPanelBackgroundBrush}"
+                    CornerRadius="{StaticResource DefaultCornerRadius}"
+                    Padding="{StaticResource DefaultThickness}">
+                <ListBox x:Name="ModelsListBox" 
+                         Style="{StaticResource JadeListBoxStyle}"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Border Background="{StaticResource FloatingPanelBackgroundBrush}"
+                                    CornerRadius="{StaticResource DefaultCornerRadius}"
+                                    Margin="10"
+                                    Padding="16">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="{Binding Name}" 
+                                                   FontWeight="Medium"
+                                                   FontSize="16"
+                                                   Margin="0,0,0,4"/>
+                                        <TextBlock Text="{Binding Size}" 
+                                                   Foreground="{StaticResource SecondaryTextBrush}"/>
+                                    </StackPanel>
+
+                                    <Button Grid.Column="1"
+                                            Style="{StaticResource JadeButtonStyle}"
+                                            Content="删除"
+                                            Width="80"
+                                            Height="32"
+                                            Margin="12,0,0,0"/>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Border>
+
+            <!-- 底部状态栏 -->
+            <Grid Grid.Row="2" Margin="0,20,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0"
+                           Text="已加载 0 个模型"
+                           Foreground="{StaticResource SecondaryTextBrush}"
+                           VerticalAlignment="Center"/>
+
+                <Button Grid.Column="1"
+                        Style="{StaticResource JadeButtonStyle}"
+                        Content="刷新列表"
+                        Width="100"/>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>
