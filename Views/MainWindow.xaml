@@ -135,7 +135,8 @@
                                           Height="36"
                                           Style="{StaticResource JadeComboBoxStyle}"
                                           MouseDoubleClick="ModelComboBox_MouseDoubleClick"
-                                          PreviewMouseDown="ModelComboBox_PreviewMouseDown"/>
+                                          PreviewMouseDown="ModelComboBox_PreviewMouseDown"
+                                          SelectionChanged="ModelComboBox_SelectionChanged"/>
 
                                 <Button Grid.Column="1" 
                                         Style="{StaticResource JadeButtonStyle}"

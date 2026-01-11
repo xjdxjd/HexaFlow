@@ -290,6 +290,15 @@ namespace HexaFlow.Views
             }
         }
         
+        private void ModelComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (ModelComboBox != null && ModelComboBox.SelectedItem != null)
+            {
+                _currentModel = ModelComboBox.SelectedItem.ToString() ?? "";
+                UpdateCurrentModelDisplay();
+            }
+        }
+        
         private void ModelComboBox_PreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
             if (ModelComboBox != null)
