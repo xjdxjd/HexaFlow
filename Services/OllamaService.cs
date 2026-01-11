@@ -140,7 +140,7 @@ namespace HexaFlow.Services
         /// <summary>
         /// 发送聊天消息并返回响应
         /// </summary>
-        public async Task<string> ChatAsync(string message, string model, List<MessageContent> history = null)
+        public async Task<string> ChatAsync(string message, string model, List<MessageContent> history = null, Dictionary<string, object> parameters = null)
         {
             try
             {
@@ -164,7 +164,8 @@ namespace HexaFlow.Services
                 {
                     model = model,
                     messages = messages,
-                    stream = false // 非流式响应
+                    stream = false, // 非流式响应
+                    options = parameters // 添加参数选项
                 };
 
                 var jsonString = JsonSerializer.Serialize(requestBody);
@@ -193,6 +194,75 @@ namespace HexaFlow.Services
             catch (Exception ex)
             {
                 throw new Exception($"聊天请求失败: {ex.Message}", ex);
+            }
+        }
+        
+        /// <summary>
+        /// 发送聊天消息并返回流式响应
+        /// </summary>
+        public async Task GenerateStreamAsync(
+            string model, 
+            List<Dictionary<string, string>> messages, 
+            Action<string> onNewToken, 
+            Dictionary<string, object> parameters = null)
+        {
+            try
+            {
+                // 构造请求体
+                var requestBody = new
+                {
+                    model = model,
+                    messages = messages,
+                    stream = true, // 流式响应
+                    options = parameters // 添加参数选项
+                };
+
+                var jsonString = JsonSerializer.Serialize(requestBody);
+                var content = new StringContent(jsonString, Encoding.UTF8, "application/json");
+
+                using var response = await _httpClient.PostAsync($"{_baseUrl}/api/chat", content);
+                response.EnsureSuccessStatusCode();
+
+                using var stream = await response.Content.ReadAsStreamAsync();
+                using var reader = new StreamReader(stream);
+
+                string line;
+                while ((line = await reader.ReadLineAsync()) != null)
+                {
+                    if (string.IsNullOrWhiteSpace(line)) continue;
+                    
+                    if (line.StartsWith("data: "))
+                    {
+                        var jsonData = line.Substring(6);
+                        
+                        try
+                        {
+                            using var doc = JsonDocument.Parse(jsonData);
+                            if (doc.RootElement.TryGetProperty("done", out var doneElement) && doneElement.GetBoolean())
+                            {
+                                // 流结束
+                                break;
+                            }
+                            
+                            if (doc.RootElement.TryGetProperty("message", out var messageElement))
+                            {
+                                if (messageElement.TryGetProperty("content", out var contentElement))
+                                {
+                                    var tokenContent = contentElement.GetString();
+                                    onNewToken?.Invoke(tokenContent);
+                                }
+                            }
+                        }
+                        catch (JsonException)
+                        {
+                            // 忽略JSON解析错误
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"流式聊天请求失败: {ex.Message}", ex);
             }
         }
 

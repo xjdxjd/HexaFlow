@@ -133,18 +133,18 @@
 
                                 <ComboBox x:Name="ModelComboBox" Grid.Column="0" 
                                           Height="36"
-                                          Style="{StaticResource JadeComboBoxStyle}"
                                           MouseDoubleClick="ModelComboBox_MouseDoubleClick"
                                           PreviewMouseDown="ModelComboBox_PreviewMouseDown"
                                           SelectionChanged="ModelComboBox_SelectionChanged"/>
 
-                                <Button Grid.Column="1" 
+                                <Button x:Name="RefreshModelButton" Grid.Column="1" 
                                         Style="{StaticResource JadeButtonStyle}"
                                         Width="36"
                                         Height="36"
                                         Margin="8,0,0,0"
                                         Content="&#xE72C;" 
-                                        FontFamily="Segoe MDL2 Assets"/>
+                                        FontFamily="Segoe MDL2 Assets"
+                                        Click="RefreshModelButton_Click"/>
                             </Grid>
                         </Grid>
                     </Border>
@@ -193,13 +193,14 @@
                             </Grid>
 
                             <!-- 会话列表 -->
-                            <ListBox x:Name="HistoryListBox" Grid.Row="1" Style="{StaticResource JadeListBoxStyle}">
+                            <ListBox x:Name="HistoryListBox" Grid.Row="1" Style="{StaticResource JadeHistoryListBoxStyle}">
+                                
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
                                         <Border Background="{StaticResource FloatingPanelBackgroundBrush}"
                                                 CornerRadius="{StaticResource DefaultCornerRadius}"
-                                                Padding="{StaticResource DefaultThickness}"
-                                                Margin="{StaticResource SmallMargin}">
+                                                Padding="{StaticResource HistoryListItemThickness}"
+                                                Margin="{StaticResource HistoryListItemMargin}">
                                             <Grid>
                                                 <Grid.RowDefinitions>
                                                     <RowDefinition Height="Auto"/>
@@ -377,17 +378,22 @@
                                                    VerticalAlignment="Center"
                                                    Margin="0,0,12,0"/>
 
-                                        <Slider Grid.Column="1" 
+                                        <Slider x:Name="TemperatureSlider" Grid.Column="1" 
                                                 Minimum="0" 
                                                 Maximum="2" 
                                                 Value="0.7"
-                                                VerticalAlignment="Center"/>
+                                                VerticalAlignment="Center"
+                                                SmallChange="0.01"
+                                                LargeChange="0.1"
+                                                ValueChanged="ParameterSlider_ValueChanged"/>
 
-                                        <TextBlock Grid.Column="2" 
-                                                   Text="0.7" 
-                                                   VerticalAlignment="Center"
-                                                   Margin="12,0,0,0"
-                                                   MinWidth="30"/>
+                                        <TextBox x:Name="TemperatureTextBox" Grid.Column="2" 
+                                                 Text="0.7"
+                                                 Width="60"
+                                                 Height="30"
+                                                 VerticalAlignment="Center"
+                                                 Margin="12,0,0,0"
+                                                 TextChanged="ParameterTextBox_TextChanged"/>
                                     </Grid>
                                 </StackPanel>
 
@@ -405,17 +411,22 @@
                                                    VerticalAlignment="Center"
                                                    Margin="0,0,12,0"/>
 
-                                        <Slider Grid.Column="1" 
+                                        <Slider x:Name="TopPSlider" Grid.Column="1" 
                                                 Minimum="0" 
                                                 Maximum="1" 
                                                 Value="0.9"
-                                                VerticalAlignment="Center"/>
+                                                VerticalAlignment="Center"
+                                                SmallChange="0.01"
+                                                LargeChange="0.1"
+                                                ValueChanged="ParameterSlider_ValueChanged"/>
 
-                                        <TextBlock Grid.Column="2" 
-                                                   Text="0.9" 
-                                                   VerticalAlignment="Center"
-                                                   Margin="12,0,0,0"
-                                                   MinWidth="30"/>
+                                        <TextBox x:Name="TopPTextBox" Grid.Column="2" 
+                                                 Text="0.9"
+                                                 Width="60"
+                                                 Height="30"
+                                                 VerticalAlignment="Center"
+                                                 Margin="12,0,0,0"
+                                                 TextChanged="ParameterTextBox_TextChanged"/>
                                     </Grid>
                                 </StackPanel>
 
@@ -433,17 +444,22 @@
                                                    VerticalAlignment="Center"
                                                    Margin="0,0,12,0"/>
 
-                                        <Slider Grid.Column="1" 
+                                        <Slider x:Name="TopKSlider" Grid.Column="1" 
                                                 Minimum="1" 
                                                 Maximum="100" 
                                                 Value="40"
-                                                VerticalAlignment="Center"/>
+                                                VerticalAlignment="Center"
+                                                SmallChange="1"
+                                                LargeChange="10"
+                                                ValueChanged="ParameterSlider_ValueChanged"/>
 
-                                        <TextBlock Grid.Column="2" 
-                                                   Text="40" 
-                                                   VerticalAlignment="Center"
-                                                   Margin="12,0,0,0"
-                                                   MinWidth="30"/>
+                                        <TextBox x:Name="TopKTextBox" Grid.Column="2" 
+                                                 Text="40"
+                                                 Width="60"
+                                                 Height="30"
+                                                 VerticalAlignment="Center"
+                                                 Margin="12,0,0,0"
+                                                 TextChanged="ParameterTextBox_TextChanged"/>
                                     </Grid>
                                 </StackPanel>
 
@@ -461,18 +477,19 @@
                                                    VerticalAlignment="Center"
                                                    Margin="0,0,12,0"/>
 
-                                        <TextBox Grid.Column="1" 
-                                                 Style="{StaticResource JadeTextBoxStyle}"
+                                        <TextBox x:Name="SeedTextBox" Grid.Column="1" 
                                                  Text="0"
-                                                 Height="36"/>
+                                                 Height="30"
+                                                 TextChanged="ParameterTextBox_TextChanged"/>
                                     </Grid>
                                 </StackPanel>
 
-                                <!-- 应用按钮 -->
-                                <Button Style="{StaticResource JadeButtonStyle}"
+                                <!-- 应用按钮 - 现在隐藏 -->
+                                <Button x:Name="ApplySettingsButton" Style="{StaticResource JadeButtonStyle}"
                                         Content="应用设置"
                                         Width="120"
-                                        HorizontalAlignment="Center"/>
+                                        HorizontalAlignment="Center"
+                                        Visibility="Collapsed"/>
                             </StackPanel>
                         </Grid>
                     </Border>
@@ -524,7 +541,7 @@
                                 </Grid>
 
                                 <!-- 提示词列表 -->
-                                <ListBox Grid.Row="1" Style="{StaticResource JadeListBoxStyle}">
+                                <ListBox Grid.Row="1" Style="{StaticResource JadePormptListBoxStyle}">
                                     <ListBoxItem>
                                         <StackPanel>
                                             <TextBlock Text="默认助手" FontWeight="Medium"/>

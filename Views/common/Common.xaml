@@ -14,6 +14,13 @@
     <Thickness x:Key="ListItemThickness">0</Thickness>
     <Thickness x:Key="SmallMargin">10,10,10,10</Thickness>
     <Thickness x:Key="ListItemMargin">5,0,5,0</Thickness>
+    
+    <Thickness x:Key="PromptListItemThickness">8</Thickness>
+    <Thickness x:Key="PromptListItemMargin">5,8,5,8</Thickness>
+    
+    <Thickness x:Key="HistoryListItemThickness">5</Thickness>
+    <Thickness x:Key="HistoryListMargin">2,0,2,0</Thickness>
+    <Thickness x:Key="HistoryListItemMargin">5</Thickness>
 
     <!-- 字体 -->
     <FontFamily x:Key="DefaultFont">HarmonyOS Sans SC</FontFamily>

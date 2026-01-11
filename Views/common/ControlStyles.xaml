@@ -84,16 +84,19 @@
                             Background="{TemplateBinding Background}" 
                             CornerRadius="{StaticResource DefaultCornerRadius}"
                             BorderThickness="2"
-                            BorderBrush="Transparent"
-                            Padding="{TemplateBinding Padding}">
+                            BorderBrush="{StaticResource SecondaryTextBrush}"
+                            Padding="{TemplateBinding Padding}"
+                            SnapsToDevicePixels="True">
                         <ScrollViewer x:Name="PART_ContentHost" 
-                                      Focusable="false" 
+                                      Margin="0"
+                                      Focusable="true" 
                                       HorizontalScrollBarVisibility="Hidden" 
                                       VerticalScrollBarVisibility="Hidden"/>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsFocused" Value="True">
                             <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource FocusBorderBrush}"/>
+                            <Setter TargetName="border" Property="Background" Value="{StaticResource InputPanelBackgroundBrush}"/>
                         </Trigger>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="border" Property="Background" Value="{StaticResource InputPanelBackgroundBrush}"/>
@@ -297,7 +300,7 @@
             </Setter.Value>
         </Setter>
     </Style>
-
+    
     <!-- 列表框样式 -->
     <Style x:Key="JadeListBoxStyle" TargetType="ListBox">
         <Setter Property="Background" Value="Transparent"/>
@@ -305,8 +308,90 @@
         <Setter Property="ItemContainerStyle" Value="{StaticResource JadeListItemStyle}"/>
         <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
         <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
+        <Setter Property="Margin" Value="20,5,60,5"/>
+    </Style>
+
+    <!-- 历史列表项样式 -->
+    <Style x:Key="JadeHistoryListItemStyle" TargetType="ListBoxItem">
+        <Setter Property="Background" Value="{StaticResource ListItemBackgroundBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource PrimaryTextBrush}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="{StaticResource HistoryListItemThickness}"/>
+        <Setter Property="Margin" Value="{StaticResource HistoryListItemMargin}"/>
+        <Setter Property="FontFamily" Value="{StaticResource DefaultFont}"/>
+        <Setter Property="FontSize" Value="{StaticResource DefaultFontSize}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListBoxItem">
+                    <Border x:Name="border" 
+                            Background="{TemplateBinding Background}" 
+                            CornerRadius="{StaticResource DefaultCornerRadius}"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="border" Property="Background" Value="{StaticResource ListItemHoverBackgroundBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="border" Property="Background" Value="{StaticResource ListItemSelectedBackgroundBrush}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
     
+    <!-- 历史列表框样式 -->
+    <Style x:Key="JadeHistoryListBoxStyle" TargetType="ListBox">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="ItemContainerStyle" Value="{StaticResource JadeHistoryListItemStyle}"/>
+        <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
+        <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
+        <Setter Property="Margin" Value="{StaticResource HistoryListMargin}"/>
+    </Style>
+
+    <!-- 提示词列表项样式 -->
+    <Style x:Key="JadePormptListItemStyle" TargetType="ListBoxItem">
+        <Setter Property="Background" Value="{StaticResource ListItemBackgroundBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource PrimaryTextBrush}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="{StaticResource PromptListItemThickness}"/>
+        <Setter Property="Margin" Value="{StaticResource PromptListItemMargin}"/>
+        <Setter Property="FontFamily" Value="{StaticResource DefaultFont}"/>
+        <Setter Property="FontSize" Value="{StaticResource DefaultFontSize}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListBoxItem">
+                    <Border x:Name="border" 
+                            Background="{TemplateBinding Background}" 
+                            CornerRadius="{StaticResource DefaultCornerRadius}"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="border" Property="Background" Value="{StaticResource ListItemHoverBackgroundBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="border" Property="Background" Value="{StaticResource ListItemSelectedBackgroundBrush}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- 提示词列表框样式 -->
+    <Style x:Key="JadePormptListBoxStyle" TargetType="ListBox">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="ItemContainerStyle" Value="{StaticResource JadePormptListItemStyle}"/>
+        <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
+        <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
+    </Style>
+
     <!-- 用户消息气泡样式 -->
     <Style x:Key="UserMessageBubbleStyle" TargetType="Border">
         <Setter Property="Background" Value="{StaticResource UserMessageBackgroundBrush}"/>

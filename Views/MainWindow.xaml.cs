@@ -303,8 +303,59 @@ namespace HexaFlow.Views
         {
             if (ModelComboBox != null)
             {
-                // 切换下拉列表的展开状态
-                ModelComboBox.IsDropDownOpen = !ModelComboBox.IsDropDownOpen;
+                // 如果点击的是下拉箭头，则切换下拉列表的展开状态
+                // 否则，让默认行为处理
+                var mousePosition = e.GetPosition(ModelComboBox);
+                var dropDownButtonWidth = 30; // 估算下拉按钮的宽度
+                var actualWidth = ModelComboBox.ActualWidth;
+                
+                if (mousePosition.X >= actualWidth - dropDownButtonWidth)
+                {
+                    // 点击的是下拉箭头区域，切换展开状态
+                    ModelComboBox.IsDropDownOpen = !ModelComboBox.IsDropDownOpen;
+                    e.Handled = true; // 标记事件已处理，防止进一步传播
+                }
+                // 如果点击的是其他区域，则不处理，让默认行为发生
+            }
+        }
+
+        /// <summary>
+        /// 刷新模型按钮点击事件
+        /// </summary>
+        private async void RefreshModelButton_Click(object sender, RoutedEventArgs e)
+        {
+            // 禁用刷新按钮并更改图标为旋转状态
+            if (sender is Button refreshButton)
+            {
+                refreshButton.Content = "\uE72C"; // 刷新图标
+                refreshButton.IsEnabled = false;
+                
+                // 添加旋转动画
+                var rotateTransform = new RotateTransform();
+                refreshButton.RenderTransform = rotateTransform;
+                refreshButton.RenderTransformOrigin = new Point(0.5, 0.5);
+                
+                var animation = new DoubleAnimation(0, 360, TimeSpan.FromSeconds(2));
+                animation.RepeatBehavior = RepeatBehavior.Forever;
+                
+                rotateTransform.BeginAnimation(RotateTransform.AngleProperty, animation);
+            }
+
+            try
+            {
+                // 重新加载模型列表
+                await LoadModelsAsync();
+            }
+            finally
+            {
+                // 恢复按钮状态
+                if (sender is Button finalButton)
+                {
+                    // 停止旋转动画
+                    finalButton.ClearValue(Button.RenderTransformProperty);
+                    finalButton.Content = "\uE72C"; // 刷新图标
+                    finalButton.IsEnabled = true;
+                }
             }
         }
 
@@ -439,8 +490,11 @@ namespace HexaFlow.Views
                 _messages.Add(assistantMessage);
                 var assistantElement = AddMessageToUI(assistantMessage);
                 
+                // 获取当前参数设置
+                var parameters = GetCurrentParameters();
+                
                 // 开始生成助手回复
-                await GenerateAssistantResponse(assistantMessage, assistantElement);
+                await GenerateAssistantResponse(assistantMessage, assistantElement, parameters);
                 
                 // 更新对话时间并保存
                 _currentConversation.UpdatedAt = DateTime.Now;
@@ -459,6 +513,53 @@ namespace HexaFlow.Views
                     sendButton.IsEnabled = true;
                 }
             }
+        }
+        
+        /// <summary>
+        /// 获取当前参数设置
+        /// </summary>
+        private Dictionary<string, object> GetCurrentParameters()
+        {
+            var parameters = new Dictionary<string, object>();
+            
+            try
+            {
+                // Temperature参数
+                if (double.TryParse(TemperatureTextBox?.Text ?? "0.7", out double tempValue))
+                {
+                    // 限制在合理范围内
+                    tempValue = Math.Max(0.0, Math.Min(2.0, tempValue));
+                    parameters["temperature"] = tempValue;
+                }
+                
+                // Top_P参数
+                if (double.TryParse(TopPTextBox?.Text ?? "0.9", out double topPValue))
+                {
+                    // 限制在合理范围内
+                    topPValue = Math.Max(0.0, Math.Min(1.0, topPValue));
+                    parameters["top_p"] = topPValue;
+                }
+                
+                // Top_K参数
+                if (int.TryParse(TopKTextBox?.Text ?? "40", out int topKValue))
+                {
+                    // 限制在合理范围内
+                    topKValue = Math.Max(1, Math.Min(100, topKValue));
+                    parameters["top_k"] = topKValue;
+                }
+                
+                // Seed参数
+                if (long.TryParse(SeedTextBox?.Text ?? "0", out long seedValue))
+                {
+                    parameters["seed"] = seedValue;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"解析参数时出错: {ex.Message}");
+            }
+            
+            return parameters;
         }
         
         /// <summary>
@@ -488,10 +589,10 @@ namespace HexaFlow.Views
             // 时间戳
             var timeTextBlock = new TextBlock
             {
-                Text = message.Timestamp.ToString("HH:mm"),
+                Text = DateTime.Now.ToString("HH:mm"),
                 FontSize = 10,
                 Foreground = (Brush)FindResource("SecondaryTextBrush"),
-                HorizontalAlignment = message.Role == "user" ? HorizontalAlignment.Right : HorizontalAlignment.Left
+                HorizontalAlignment = HorizontalAlignment.Left
             };
             Grid.SetRow(timeTextBlock, 0);
             grid.Children.Add(timeTextBlock);
@@ -499,50 +600,80 @@ namespace HexaFlow.Views
             // 消息内容
             var contentTextBlock = new TextBlock
             {
-                Name = "MessageContent",
                 Text = message.Content,
                 TextWrapping = TextWrapping.Wrap,
-                HorizontalAlignment = message.Role == "user" ? HorizontalAlignment.Right : HorizontalAlignment.Left
+                Foreground = (Brush)FindResource("PrimaryTextBrush")
             };
             Grid.SetRow(contentTextBlock, 1);
             grid.Children.Add(contentTextBlock);
 
             // 添加右键菜单
-            var contextMenu = new ContextMenu();
-            contextMenu.Style = (Style)FindResource("JadeContextMenuStyle");
+            var contextMenu = new ContextMenu { Style = (Style)FindResource("JadeContextMenuStyle") };
             
-            // 为用户消息添加编辑选项
-            if (message.Role == "user")
+            var copyMenuItem = new MenuItem { Header = "复制", Style = (Style)FindResource("JadeMenuItemStyle") };
+            copyMenuItem.Click += (s, e) =>
             {
-                var editMenuItem = new MenuItem { Header = "编辑消息" };
-                editMenuItem.Click += EditUserMessage_Click;
-                editMenuItem.DataContext = message;
-                editMenuItem.Style = (Style)FindResource("JadeMenuItemStyle");
-                contextMenu.Items.Add(editMenuItem);
-                
-                var separator = new Separator();
-                separator.Style = (Style)FindResource("JadeSeparatorStyle");
-                contextMenu.Items.Add(separator);
-            }
-            
-            // 添加复制选项
-            var copyMenuItem = new MenuItem { Header = "复制消息" };
-            copyMenuItem.Click += CopyMessage_Click;
-            copyMenuItem.DataContext = message;
-            copyMenuItem.Style = (Style)FindResource("JadeMenuItemStyle");
+                Clipboard.SetText(message.Content);
+            };
             contextMenu.Items.Add(copyMenuItem);
-            
-            var regenerateMenuItem = new MenuItem { Header = "重新生成回复" };
-            regenerateMenuItem.Click += RegenerateResponse_Click;
-            regenerateMenuItem.DataContext = message;
-            regenerateMenuItem.Style = (Style)FindResource("JadeMenuItemStyle");
-            contextMenu.Items.Add(regenerateMenuItem);
-            
+
+            var editMenuItem = new MenuItem { Header = "编辑", Style = (Style)FindResource("JadeMenuItemStyle") };
+            editMenuItem.Click += async (s, e) =>
+            {
+                var dialog = new TextBoxDialog("编辑消息", "请输入消息内容：", message.Content);
+                dialog.Owner = this;
+                
+                var result = dialog.ShowDialog();
+                if (result == true)
+                {
+                    // 更新消息内容
+                    message.Content = dialog.Answer;
+                    contentTextBlock.Text = message.Content;
+                    
+                    // 如果是用户消息，重新生成助手回复
+                    if (message.Role == "user")
+                    {
+                        // 查找下一个助手消息
+                        var index = _messages.IndexOf(message);
+                        if (index >= 0 && index < _messages.Count - 1)
+                        {
+                            var nextMessage = _messages[index + 1];
+                            if (nextMessage.Role == "assistant")
+                            {
+                                // 更新助手消息的内容并重新生成
+                                nextMessage.Content = "";
+                                // 由于我们无法直接访问UI元素，这里简化处理：重新生成整个助手消息
+                                // 从UI中移除原来的助手消息气泡
+                                if (MessagesPanel.Children.Contains(messageBubble))
+                                {
+                                    int bubbleIndex = MessagesPanel.Children.IndexOf(messageBubble);
+                                    if (bubbleIndex + 1 < MessagesPanel.Children.Count)
+                                    {
+                                        // 移除下一个元素（应该是助手消息）
+                                        MessagesPanel.Children.RemoveAt(bubbleIndex + 1);
+                                    }
+                                    
+                                    // 添加新的助手消息气泡
+                                    var newAssistantElement = AddMessageToUI(nextMessage);
+                                    
+                                    // 重新生成助手回复
+                                    await GenerateAssistantResponse(nextMessage, newAssistantElement);
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+            contextMenu.Items.Add(editMenuItem);
+
             messageBubble.ContextMenu = contextMenu;
 
-            // 添加到消息面板
-            var messagesPanel = (StackPanel)FindName("MessagesPanel");
-            messagesPanel.Children.Add(messageBubble);
+            // 添加到面板
+            Dispatcher.Invoke(() =>
+            {
+                MessagesPanel.Children.Add(messageBubble);
+                ScrollToBottomAsync();
+            });
 
             return messageBubble;
         }
@@ -558,70 +689,63 @@ namespace HexaFlow.Views
         }
         
         /// <summary>
-        /// 生成助手回复（模拟流式显示效果）
+        /// 生成助手回复
         /// </summary>
-        private async Task GenerateAssistantResponse(Message assistantMessage, Border assistantElement)
+        private async Task GenerateAssistantResponse(Message message, Border messageElement, Dictionary<string, object> parameters = null)
         {
-            if (_isGeneratingResponse) return;
-            
-            _isGeneratingResponse = true;
-            
+            var textBlock = messageElement.FindVisualChild<TextBlock>();
+            if (textBlock == null) return;
+
             try
             {
-                // 准备历史消息
-                var history = new List<MessageContent>();
-                foreach (var msg in _messages)
-                {
-                    if (msg != assistantMessage) // 不包含当前助手消息占位符
-                    {
-                        history.Add(new MessageContent { Role = msg.Role, Content = msg.Content });
-                    }
-                }
+                // 获取历史消息（最近的几条）
+                var recentMessages = _messages.TakeLast(10).ToList(); // 只取最近的10条消息
+                var history = recentMessages.Select(m => new { Role = m.Role, Content = m.Content }).ToList();
+
+                // 如果没有系统消息，则添加默认系统消息
+                var fullMessages = new List<Dictionary<string, string>>();
                 
-                // 获取完整响应
-                var fullResponse = await _ollamaService.ChatAsync(
-                    _messages[_messages.Count - 2].Content, // 最后一条用户消息
+                // 添加历史消息
+                foreach (var histMsg in history)
+                {
+                    var msgDict = new Dictionary<string, string>
+                    {
+                        ["role"] = histMsg.Role,
+                        ["content"] = histMsg.Content
+                    };
+                    fullMessages.Add(msgDict);
+                }
+
+                // 使用OllamaService生成流式回复
+                await _ollamaService.GenerateStreamAsync(
                     _currentModel,
-                    history);
-                
-                // 模拟流式显示效果
-                var currentText = "";
-                foreach (char c in fullResponse)
-                {
-                    currentText += c;
-                    // 在UI线程上更新响应
-                    Dispatcher.Invoke(() =>
+                    fullMessages,
+                    newText =>
                     {
-                        assistantMessage.Content = currentText;
-                        UpdateMessageUI(assistantElement, currentText);
-                        
-                        // 滚动到底部
-                        _ = ScrollToBottomAsync(); // 修复警告
-                    });
-                    
-                    // 延迟以产生流式效果
-                    await Task.Delay(30); // 30ms延迟
-                }
+                        // 更新UI
+                        Dispatcher.Invoke(() =>
+                        {
+                            if (textBlock != null)
+                            {
+                                message.Content += newText;
+                                textBlock.Text = message.Content;
+                                // 自动滚动到底部
+                                ChatScrollViewer.ScrollToEnd();
+                            }
+                        });
+                    },
+                    parameters // 传递参数
+                );
             }
             catch (Exception ex)
             {
-                // 添加错误消息
-                _messages.RemoveAt(_messages.Count - 1); // 移除占位符
-                var errorElement = (StackPanel)FindName("MessagesPanel");
-                errorElement.Children.RemoveAt(errorElement.Children.Count - 1); // 移除UI上的占位符
-                
-                var errorMessage = new Message("assistant", $"错误: {ex.Message}");
-                _messages.Add(errorMessage);
-                AddMessageToUI(errorMessage);
-            }
-            finally
-            {
-                // 更新对话时间并保存
-                _currentConversation.UpdatedAt = DateTime.Now;
-                _currentConversation.Messages = _messages.ToList(); // 保存消息副本
-                await _chatHistoryService.SaveConversationAsync(_currentConversation);
-                
-                _isGeneratingResponse = false;
+                Dispatcher.Invoke(() =>
+                {
+                    if (textBlock != null)
+                    {
+                        textBlock.Text = $"生成回复时出错: {ex.Message}";
+                    }
+                });
             }
         }
         
@@ -1113,5 +1237,118 @@ namespace HexaFlow.Views
                 }));
             }
         }
+        
+        /// <summary>
+        /// 参数滑块值改变事件
+        /// </summary>
+        private void ParameterSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (sender is Slider slider)
+            {
+                TextBox textBox = null;
+                
+                // 根据滑块确定对应的文本框
+                if (slider.Name == "TemperatureSlider")
+                {
+                    textBox = TemperatureTextBox;
+                }
+                else if (slider.Name == "TopPSlider")
+                {
+                    textBox = TopPTextBox;
+                }
+                else if (slider.Name == "TopKSlider")
+                {
+                    textBox = TopKTextBox;
+                }
+                
+                if (textBox != null)
+                {
+                    // 更新文本框的值，保留适当的小数位数
+                    if (slider.Name == "TemperatureSlider" || slider.Name == "TopPSlider")
+                    {
+                        textBox.Text = slider.Value.ToString("F2");
+                    }
+                    else // TopKSlider
+                    {
+                        textBox.Text = ((int)slider.Value).ToString();
+                    }
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 参数文本框值改变事件
+        /// </summary>
+        private void ParameterTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (sender is TextBox textBox)
+            {
+                // 对于Seed输入框，单独处理，不与其他参数框共享相同的double解析逻辑
+                if (textBox.Name == "SeedTextBox")
+                {
+                    // 对于Seed输入框，我们只验证是否为有效的整数（允许为空字符串）
+                    if (!string.IsNullOrEmpty(textBox.Text) && !long.TryParse(textBox.Text, out _))
+                    {
+                        // 如果输入不是有效数字，可以选择显示警告或恢复之前的值
+                        // 这里我们不做任何操作，让用户自己修正输入
+                    }
+                }
+                else
+                {
+                    // 对于其他参数输入框，进行double解析
+                    if (double.TryParse(textBox.Text, out double value))
+                    {
+                        Slider slider = null;
+                        
+                        // 根据文本框确定对应的滑块
+                        if (textBox.Name == "TemperatureTextBox")
+                        {
+                            slider = TemperatureSlider;
+                            // 限制范围
+                            value = Math.Max(0.0, Math.Min(2.0, value));
+                        }
+                        else if (textBox.Name == "TopPTextBox")
+                        {
+                            slider = TopPSlider;
+                            // 限制范围
+                            value = Math.Max(0.0, Math.Min(1.0, value));
+                        }
+                        else if (textBox.Name == "TopKTextBox")
+                        {
+                            slider = TopKSlider;
+                            // 限制范围
+                            value = Math.Max(1, Math.Min(100, value));
+                        }
+                        
+                        if (slider != null)
+                        {
+                            slider.Value = value;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+public static class UIHelper
+{
+    /// <summary>
+    /// 查找视觉树中的子元素
+    /// </summary>
+    public static T FindVisualChild<T>(this DependencyObject parent) where T : class
+    {
+        for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+        {
+            var child = VisualTreeHelper.GetChild(parent, i);
+            if (child != null && child is T)
+            {
+                return child as T;
+            }
+            var childOfChild = FindVisualChild<T>(child);
+            if (childOfChild != null)
+                return childOfChild;
+        }
+        return null;
     }
 }
